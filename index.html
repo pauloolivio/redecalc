@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html>
+
+<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Met-Ativa | Engenharia Mecânica</title>
+    <script src="assets/application-8013fdc35e4c79f95bcb3d655ff61f137ac05bcee52e6d96588427a84eddef12.js" data-turbolinks-track="true"></script>
+    <link rel="stylesheet" media="all" href="assets/application-b0b91461d093aa2ed95d8a7467856e4dc16f55744d3c17a927c3598e5b26cd3f.css" data-turbolinks-track="true" />
+    <link rel="shortcut icon" type="image/x-icon" href="assets/favicon-e8bea7a0071e296638a3a1a08be81f0a30b9c945625e5a200fefecd8d9b2ed6c.ico" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <meta name="csrf-param" content="authenticity_token" />
+    <meta name="csrf-token" content="yPSw2GZ4y0QgdPbKdCSP/cMical0tBwKmQAELx78Q7jM+gKdI2r7GIZx7zfVbad1DkQJBMUTU3dG3lYgMgJNDA==" />
+    <script src="assets//carrossel.js"></script>
+    <style>
+        /* Global */
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        /*body {}
+        /* Gallery */
+        
+        .jumbotron {
+            height: 550px;
+            padding-top: 75px;
+            background-image: url('assets/background.jpg'); /* Adicione a imagem de fundo aqui */
+            background-size: cover; /* Faz a imagem cobrir todo o jumbotron */
+            background-position: center; /* Centraliza a imagem */
+            background-repeat: no-repeat; /* Evita repetição da imagem */
+            color: white;
+        }
+
+        .img-circle {
+            width: 175px;
+        }
+
+        .gallery {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 100%;
+            height: 90%;
+            /*max-height: 28vw;*/
+            overflow: hidden;
+        }
+        
+        .gallery:before,
+        .gallery:after {
+            display: block;
+            content: "";
+            position: absolute;
+            top: 0;
+            width: 20%;
+            height: 100%;
+            z-index: 3;
+        }
+        
+        .gallery:before {
+            left: 0;
+        }
+        
+        .gallery:after {
+            right: 0;
+        }
+        /*.gallery__stream {
+            position: relative;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 100%;
+            height: 145px;
+        }*/
+        
+        .gallery__stream {
+            position: relative;
+            top: 56%;
+            transform: translateY(-50%);
+            width: 80%;
+            height: 140px;
+            background-size: auto 100%;
+            background-repeat: no-repeat;
+            background-position: 0% 0%;
+        }
+        
+        .gallery__item {
+            position: absolute;
+            width: 100%;
+            height: 130px;
+            transition: 1s all ease;
+            background-repeat: no-repeat;
+            background-position: center center;
+            border-radius: 5px;
+            background-size: auto 100%;
+        }
+        
+        .gallery__item img {
+            width: 100%;
+            height: auto;
+        }
+        
+        .gallery__item:nth-child(1) {
+            left: 0;
+            z-index: 1;
+            transform: translateX(-100%) scale(.8);
+        }
+        
+        .gallery__item:nth-child(2) {
+            left: 0;
+            z-index: 2;
+            transform: translateX(-50%) scale(.8);
+        }
+        
+        .gallery__item:nth-child(3) {
+            left: 50%;
+            z-index: 4;
+            transform: translateX(-50%) scale(1);
+        }
+        
+        .gallery__item:nth-child(4) {
+            left: 100%;
+            z-index: 2;
+            transform: translateX(-50%) scale(.8);
+        }
+        
+        .gallery__item:nth-child(n+5) {
+            left: 100%;
+            z-index: 1;
+            transform: scale(.8);
+        }
+        /* Controllers */
+        .text-center{
+            font-weight: bold;
+        }
+        .gallery__prev,
+        .gallery__next {
+            position: absolute;
+            top: 50%;
+            z-index: 4;
+            width: 1%;
+            height: 1%;
+            transform: translateX(-50%) translateY(-50%) scale(.8);
+            /*cursor: pointer;*/
+        }
+        
+        .gallery__prev {
+            left: 0;
+        }
+        
+        .gallery__next {
+            left: 100%;
+        }
+        .ribbon-social {
+            background-color: #2C3E50;
+            padding: 10px 0;
+        }
+
+        .ribbon-social .btn-social {
+            color: white;
+            border: 1px solid white;
+        }
+
+        .ribbon-social .btn-social i {
+            font-size: 20px;
+        }
+      
+        .copyright {
+            background-color: #2C3E50; /* Cor de fundo */
+            color: white; /* Cor do texto */
+            padding: 15px 0; /* Espaçamento interno */
+            text-align: center; /* Centraliza o texto */
+            font-size: 14px; /* Tamanho da fonte */
+            position: relative; /* Para posicionamento */
+            z-index: 10; /* Para garantir que fique acima de outros elementos */
+        }
+
+        .copyright p {
+            margin: 0; /* Remove margens do parágrafo */
+            font-family: 'Arial', sans-serif; /* Fonte */
+        }
+
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <nav class="navbar navbar-custom navbar-fixed-top">
+            <div class="container">
+                <div class="navbar-header">
+                    <a id="logo" class="navbar-brand" href="index.html">Prof. Dr. Paulo Sergio Olivio Filho</a>
+                </div>
+                <div id="navbar">
+                    <ul class="nav navbar-nav navbar-right">
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                <img src="assets/flags/Brazil-310ab6c812922e6c4d41ceb2202068a1d26832e07dae4cecb3830eab8af77b18.png" alt="Brazil" /> Language <b class="caret"></b>
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a href="index.html"><img src="assets/flags/Brazil-310ab6c812922e6c4d41ceb2202068a1d26832e07dae4cecb3830eab8af77b18.png" alt="Brazil" /> Portuguese</a>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <div class="jumbotron vertical-align">
+            <div class="container">
+                <div class="row">                
+                </div>
+            </div>
+        </div>
+
+       
+                <div class="row ">
+                    <h2 class="text-center buffer-bottom ">FERRAMENTAS E MODELOS APLICADOS</h2>
+                    <div class="col-sm-6 col-md-3 ">
+                        <div class="thumbnail thumbnail-border fade ">
+                            <a href="/modelo_aula/AulaExemplo.html">
+                                <img alt="Network Sharing " class="img-circle " src="assets/icone1.png" />
+                                <div class="caption ">
+                                    <h3>Modelo de Aula Mista</h3>
+                                    <p>Aqui apresento um modelo de aula aplicado por mim, com: pré-aula, aula expositiva, calculadoras on-line e um exemplo de atividade avaliativa com jogos em equipes.</p>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-md-3 ">
+                        <div class="thumbnail thumbnail-border fade ">
+                            <a href="/separadores_equipe/Separadores.html">
+                                <img alt="Network Sharing " class="img-circle " src="assets/icone2.png" />
+                                <div class="caption ">
+                                    <h3>Programas para Separação de Equipes</h3>
+                                    <p>Aqui deixo aberto alguns programas que podem ser aplicados por educadores para realizar competições ou separar grupos conforme o metodo de ensino.
+                                    </p>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-md-3 ">
+                        <div class="thumbnail thumbnail-border fade ">
+                            <a href="/jogos&quizzes/Jogos.html">
+                                <img alt="Network Sharing " class="img-circle " src="assets/icone3.png" />
+                                <div class="caption ">
+                                    <h3>Jogos para aplicação durante a aula e pós-aula</h3>
+                                    <p>Aqui deixo a disposição alguns modelos básicos que podem ser utilizados em salas de aula para fixar o conteudo e/ou para promover uma competição de conhecimento com os alunos.</p>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-md-3 ">
+                        <div class="thumbnail thumbnail-border fade ">
+                            <a href="/calculadoras/Calculadoras.html">
+                                <img alt="Network Sharing " class="img-circle " src="assets/icone4.png" />
+                                <div class="caption ">
+                                    <h3>Calculadoras para realização de atividades e feedback</h3>
+                                    <p>Aqui deixo alguns exemplos de calculadoras que podem ser usadas em aulas para deixa a aula mais atrativa com o auxilio da tecnologia.</p>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            <div class="row ">
+            </div>
+        </div>
+    </div>
+    <!-- end of wrap -->
+    <footer class="footer">
+        <div class="container text-center">
+            <div class="row buffer-top">
+                <div class="col-md-4">
+                    <h5>Localização</h5>
+                    <p>UTFPR - Campus Cornélio Procópio.</p>
+                    <p>Bloco da Engenharia Mecânica.</p>
+                </div>
+    
+                <div class="col-md-4">
+                    <h5>Sobre o Site</h5>
+                    <p>Site dedicado a difusão do conhecimento, abrangendo modelos e ferramentas desenvolvidas pelo autor, que está sendo aplicado ou será aplicada em aulas da graduação.</p>
+                </div>
+    
+                <div class="col-md-4">
+                    <h5>Contato do autor</h5>
+                    <p>Viu um bug? Tem alguma reclamação? Quer apenas enviar uma mensagem? Me contate pelas redes sociais</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <div class="ribbon-social">
+        <div class="container text-center">
+            <a class="btn btn-outline-light btn-social mx-1" href="https://br.linkedin.com/in/paulo-s-olivio-f-b67b0746">
+                <i class="fab fa-linkedin-in"></i>
+            </a>
+            <a class="btn btn-outline-light btn-social mx-1" href="https://www.instagram.com/paulooliviof/">
+                <i class="fab fa-instagram"></i>
+            </a>
+            <a class="btn btn-outline-light btn-social mx-1" href="#!">
+                <i class="fab fa-telegram-plane"></i>
+            </a>
+            <a class="btn btn-outline-light btn-social mx-1" href="#!">
+                <i class="fab fa-whatsapp"></i>
+            </a>
+        </div>
+        <div class="copyright">
+            <p>Copyright @2024 - Todos os Direitos Reservados ao Autor</p>
+        </div>
+    </div>
+    </footer>   
+</body>
+
+</html>

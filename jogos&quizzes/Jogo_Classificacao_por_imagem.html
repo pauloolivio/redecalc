@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo de Classificação de Ensaios</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            font-size: 24px;
+        }
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 800px;
+            margin-bottom: 20px;
+        }
+        .drop-zones {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .drop-zone-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 45%;
+        }
+        .drop-zone-label {
+            margin-bottom: 10px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .drop-zone {
+            width: 100%;
+            min-height: 150px;
+            border: 2px dashed #333;
+            padding: 10px;
+            background-color: #fff;
+            box-sizing: border-box;
+        }
+        .images-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 800px;
+        }
+        .draggable-image {
+            width: 80px;
+            height: 80px;
+            margin: 5px;
+            cursor: move;
+            border: 1px solid #ccc;
+        }
+        .score-timer {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            max-width: 400px;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+        .restart-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .restart-button:hover {
+            background-color: #45a049;
+        }
+        @media (max-width: 600px) {
+            .game-area {
+                width: 100%;
+            }
+            .drop-zones {
+                flex-direction: column;
+                align-items: center;
+            }
+            .drop-zone-container {
+                width: 90%;
+                margin-bottom: 20px;
+            }
+            .draggable-image {
+                width: 60px;
+                height: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Classificação de Ensaios</h1>
+    <div class="score-timer">
+        <div>Pontuação: <span id="score">0</span></div>
+        <div>Tempo: <span id="timer">00:00</span></div>
+    </div>
+    <div class="game-area">
+        <div class="drop-zones">
+            <div class="drop-zone-container">
+                <div class="drop-zone-label">Ensaio Destrutivo</div>
+                <div class="drop-zone" id="destructive"></div>
+            </div>
+            <div class="drop-zone-container">
+                <div class="drop-zone-label">Ensaio Não Destrutivo</div>
+                <div class="drop-zone" id="non-destructive"></div>
+            </div>
+        </div>
+        <div class="images-container" id="images-container">
+            <!-- As imagens serão adicionadas aqui pelo JavaScript -->
+        </div>
+    </div>
+    <button class="restart-button" id="restart-button">Reiniciar Jogo</button>
+
+    <script>
+        const images = [
+            { src: 'https://picsum.photos/80?random=1', type: 'destructive' },
+            { src: 'https://picsum.photos/80?random=2', type: 'non-destructive' },
+            { src: 'https://picsum.photos/80?random=3', type: 'destructive' },
+            { src: 'https://picsum.photos/80?random=4', type: 'non-destructive' },
+            { src: 'https://picsum.photos/80?random=5', type: 'destructive' },
+            { src: 'https://picsum.photos/80?random=6', type: 'non-destructive' },
+            { src: 'https://picsum.photos/80?random=7', type: 'destructive' },
+            { src: 'https://picsum.photos/80?random=8', type: 'non-destructive' },
+            { src: 'https://picsum.photos/80?random=9', type: 'destructive' },
+            { src: 'https://picsum.photos/80?random=10', type: 'non-destructive' },
+        ];
+
+        let score = 0;
+        let startTime;
+        let timerInterval;
+        let imagesPlaced = 0;
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function startTimer() {
+            startTime = new Date();
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        function updateTimer() {
+            const currentTime = new Date();
+            const elapsedTime = new Date(currentTime - startTime);
+            const minutes = elapsedTime.getMinutes().toString().padStart(2, '0');
+            const seconds = elapsedTime.getSeconds().toString().padStart(2, '0');
+            document.getElementById('timer').textContent = `${minutes}:${seconds}`;
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+        }
+
+        function updateScore(points) {
+            score += points;
+            document.getElementById('score').textContent = score;
+        }
+
+        function createDraggableImage(image) {
+            const img = document.createElement('img');
+            img.src = image.src;
+            img.className = 'draggable-image';
+            img.draggable = true;
+            img.dataset.type = image.type;
+
+            img.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', e.target.id);
+            });
+
+            img.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                img.style.opacity = '0.5';
+            }, { passive: false });
+
+            img.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                img.style.position = 'absolute';
+                img.style.left = touch.pageX - 40 + 'px';
+                img.style.top = touch.pageY - 40 + 'px';
+            }, { passive: false });
+
+            img.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                img.style.opacity = '1';
+                img.style.position = 'static';
+                const touch = e.changedTouches[0];
+                const dropZone = document.elementFromPoint(touch.pageX, touch.pageY).closest('.drop-zone');
+                if (dropZone) {
+                    handleDrop(img, dropZone);
+                }
+            });
+
+            return img;
+        }
+
+        function handleDrop(image, dropZone) {
+            if (dropZone && image) {
+                dropZone.appendChild(image);
+                image.style.width = '60px';
+                image.style.height = '60px';
+
+                const isCorrect = (dropZone.id === image.dataset.type);
+                updateScore(isCorrect ? 1 : -1);
+
+                imagesPlaced++;
+                if (imagesPlaced === images.length) {
+                    stopTimer();
+                }
+            }
+        }
+
+        function initGame() {
+            const imagesContainer = document.getElementById('images-container');
+            imagesContainer.innerHTML = '';
+            shuffleArray(images);
+
+            images.forEach((image, index) => {
+                const img = createDraggableImage(image);
+                img.id = `image-${index}`;
+                imagesContainer.appendChild(img);
+            });
+
+            const dropZones = document.querySelectorAll('.drop-zone');
+            dropZones.forEach(zone => {
+                zone.innerHTML = '';
+                zone.addEventListener('dragover', (e) => e.preventDefault());
+                zone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    const imageId = e.dataTransfer.getData('text');
+                    const image = document.getElementById(imageId);
+                    handleDrop(image, zone);
+                });
+            });
+
+            imagesContainer.addEventListener('mousedown', () => {
+                if (!startTime) {
+                    startTimer();
+                }
+            });
+
+            imagesContainer.addEventListener('touchstart', () => {
+                if (!startTime) {
+                    startTimer();
+                }
+            }, { passive: true });
+
+            score = 0;
+            imagesPlaced = 0;
+            updateScore(0);
+            document.getElementById('timer').textContent = '00:00';
+            clearInterval(timerInterval);
+            startTime = null;
+        }
+
+        document.getElementById('restart-button').addEventListener('click', initGame);
+
+        initGame();
+    </script>
+</body>
+</html>

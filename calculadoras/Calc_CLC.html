@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Curva Limite de Conformação</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+     
+        .inputGroup {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 10px;
+            background-color: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 1000px;
+            
+        }
+        input {
+            width: 50px;
+            margin: 5px 0;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+        button {
+            margin: 20px 0;
+            padding: 10px 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #graphContainer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 1000px;
+        }
+        canvas {
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            max-width: 100%;
+            height: auto;
+        }
+        #measurementsContainer {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+            width: 100%;
+        }
+        .measurementItem {
+            background-color: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <h1>Curva Limite de Conformação (CLC)</h1>
+    <div>
+        <div class="inputGroup">
+            <label>Diâmetro Inicial:</label>
+            <input type="number" id="diametroInicial" value="3" step="0.1">
+        </div>
+    </div>
+    <div>
+        <div class="inputGroup">
+            <label>Elipse Medida 1:</label>
+            <div id="elipseMedida1Inputs"></div>
+        </div>
+        <div class="inputGroup">
+            <label>Elipse Medida 2:</label>
+            <div id="elipseMedida2Inputs"></div>
+        </div>
+    </div>
+    <div id="measurementsContainer"></div>
+    <button onclick="calcularCurva()">Calcular Curva</button>
+    <div id="graphContainer">
+        <canvas id="curvaCanvas" width="800" height="600"></canvas>
+    </div>
+
+    <script>
+         function createInputs() {
+            const elipseMedida1Inputs = document.getElementById('elipseMedida1Inputs');
+            const elipseMedida2Inputs = document.getElementById('elipseMedida2Inputs');
+            const defaultValues1 = [5, 4.6, 4.4, 4.2, 4.1, 4, 4.2, 4.4, 4.3, 4.1];
+            const defaultValues2 = [2, 2.2, 2.4, 2.6, 2.8, 3, 3.2, 3.4, 3.5, 3.6];
+
+            for (let i = 0; i < 10; i++) {
+                const input1 = document.createElement('input');
+                input1.type = 'number';
+                input1.step = '0.1';
+                input1.value = defaultValues1[i];
+                elipseMedida1Inputs.appendChild(input1);
+
+                const input2 = document.createElement('input');
+                input2.type = 'number';
+                input2.step = '0.1';
+                input2.value = defaultValues2[i];
+                elipseMedida2Inputs.appendChild(input2);
+            }
+        }
+
+        function getInputValues(groupId) {
+            return Array.from(document.querySelectorAll(`#${groupId} input`)).map(input => parseFloat(input.value));
+        }
+
+        function calcularCurva() {
+            const diametroInicial = parseFloat(document.getElementById('diametroInicial').value);
+            const elipseMedida1Values = getInputValues('elipseMedida1Inputs');
+            const elipseMedida2Values = getInputValues('elipseMedida2Inputs');
+
+            const canvas = document.getElementById('curvaCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const e1Values = [];
+            const e2Values = [];
+
+            for (let i = 0; i < elipseMedida1Values.length; i++) {
+                const e1 = Math.log(elipseMedida1Values[i] / diametroInicial);
+                const e2 = Math.log(elipseMedida2Values[i] / diametroInicial);
+                e1Values.push(e1);
+                e2Values.push(e2);
+            }
+
+            // Configuração do gráfico
+            const margin = 50;
+            const width = canvas.width - 2 * margin;
+            const height = canvas.height - 2 * margin;
+
+            // Escalas
+            const xScale = width / 0.8; // -0.5 a 0.3
+            const yScale = height / 0.8; // 0 a 0.8
+
+            // Fundo do gráfico
+            ctx.fillStyle = '#f8f8f8';
+            ctx.fillRect(margin, margin, width, height);
+
+            // Grade
+            ctx.strokeStyle = '#e0e0e0';
+            ctx.lineWidth = 1;
+            for (let i = -0.4; i <= 0.2; i += 0.1) {
+                const x = margin + (i + 0.5) * xScale;
+                ctx.beginPath();
+                ctx.moveTo(x, margin);
+                ctx.lineTo(x, canvas.height - margin);
+                ctx.stroke();
+            }
+            for (let i = 0.1; i <= 0.7; i += 0.1) {
+                const y = canvas.height - margin - i * yScale;
+                ctx.beginPath();
+                ctx.moveTo(margin, y);
+                ctx.lineTo(canvas.width - margin, y);
+                ctx.stroke();
+            }
+
+            // Eixos
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(margin, margin);
+            ctx.lineTo(margin, canvas.height - margin);
+            ctx.lineTo(canvas.width - margin, canvas.height - margin);
+            ctx.stroke();
+
+            // Rótulos dos eixos
+            ctx.font = '14px Arial';
+            ctx.fillStyle = 'black';
+            ctx.textAlign = 'center';
+            ctx.fillText('Menor Deformação Principal (ε₂)', canvas.width / 2, canvas.height - 10);
+            ctx.save();
+            ctx.translate(20, canvas.height / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText('Maior Deformação Principal (ε₁)', 0, 0);
+            ctx.restore();
+
+            // Área de preenchimento
+            ctx.beginPath();
+            ctx.moveTo(margin + (e2Values[0] + 0.5) * xScale, canvas.height - margin);
+            for (let i = 0; i < e1Values.length; i++) {
+                const x = margin + (e2Values[i] + 0.5) * xScale;
+                const y = canvas.height - margin - e1Values[i] * yScale;
+                ctx.lineTo(x, y);
+            }
+            ctx.lineTo(margin + (e2Values[e2Values.length - 1] + 0.5) * xScale, canvas.height - margin);
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(0, 128, 0, 0.2)';
+            ctx.fill();
+
+            // Plotagem dos pontos e linha
+            ctx.beginPath();
+            for (let i = 0; i < e1Values.length; i++) {
+                const x = margin + (e2Values[i] + 0.5) * xScale;
+                const y = canvas.height - margin - e1Values[i] * yScale;
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+                ctx.fillStyle = 'red';
+                ctx.fillRect(x - 4, y - 4, 8, 8);
+            }
+            ctx.strokeStyle = 'red';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Textos adicionais
+            ctx.font = '14px Arial';
+            ctx.fillStyle = 'black';
+            ctx.fillText('Embutimento', margin + 200, canvas.height - margin - 0.6 * yScale);
+            ctx.save();
+            ctx.translate(margin + 0.5 * xScale, canvas.height - margin - 0.4 * yScale);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText('Deformação Plana', 0, 0);
+            ctx.restore();
+            ctx.fillText('Estiramento', canvas.width - margin -140, canvas.height - margin - 0.6 * yScale);
+
+            ctx.fillStyle = 'red';
+            ctx.font = 'bold 16px Arial';
+            ctx.fillText('FALHA', margin + 300, canvas.height - margin - 0.5 * yScale);
+            ctx.fillStyle = 'green';
+            ctx.fillText('SEGURO', margin + 300, canvas.height - margin - 0.1 * yScale);
+
+            // Linha vertical em x = 0
+            ctx.beginPath();
+            ctx.moveTo(margin + 0.5 * xScale, margin);
+            ctx.lineTo(margin + 0.5 * xScale, canvas.height - margin);
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // Desenhar medições e elipses
+            const measurementsContainer = document.getElementById('measurementsContainer');
+            measurementsContainer.innerHTML = '';
+
+            for (let i = 0; i < elipseMedida1Values.length; i++) {
+                const measurementItem = document.createElement('div');
+                measurementItem.className = 'measurementItem';
+                
+                const measurementCanvas = document.createElement('canvas');
+                measurementCanvas.width = 150;
+                measurementCanvas.height = 100;
+                
+                const mctx = measurementCanvas.getContext('2d');
+                
+                // Desenhar círculo inicial
+                mctx.beginPath();
+                mctx.arc(75, 50, 15, 0, 2 * Math.PI);
+                mctx.strokeStyle = 'blue';
+                mctx.lineWidth = 2;
+                mctx.stroke();
+
+                // Desenhar elipse final (girada em 90 graus)
+                mctx.beginPath();
+                mctx.save();
+                mctx.translate(75, 50);
+                mctx.scale(1, -1); // Inverte a direção vertical para manter a orientação correta
+                mctx.ellipse(0, 0, elipseMedida2Values[i] * 5, elipseMedida1Values[i] * 5, 0, 0, 2 * Math.PI);
+                mctx.restore();
+                mctx.strokeStyle = 'red';
+                mctx.lineWidth = 2;
+                mctx.stroke();
+
+                // Adicionar texto
+                mctx.font = '12px Arial';
+                mctx.fillStyle = 'black';
+                mctx.textAlign = 'center';
+                mctx.fillText(`Medida ${i + 1}`, 75, 90);
+                mctx.fillText(`(${elipseMedida1Values[i]}, ${elipseMedida2Values[i]})`, 75, 15);
+
+                measurementItem.appendChild(measurementCanvas);
+                measurementsContainer.appendChild(measurementItem);
+            }
+        }
+
+        createInputs();
+        calcularCurva();
+
+        // Adicionar evento de redimensionamento
+        window.addEventListener('resize', function() {
+            const canvas = document.getElementById('curvaCanvas');
+            const container = document.getElementById('graphContainer');
+            const aspectRatio = canvas.width / canvas.height;
+            
+            canvas.style.width = '100%';
+            canvas.style.height = 'auto';
+            
+            // Ajustar altura se a largura for maior que a altura * aspectRatio
+            if (container.offsetWidth > container.offsetHeight * aspectRatio) {
+                canvas.style.width = 'auto';
+                canvas.style.height = '100%';
+            }
+            
+            calcularCurva();
+        });
+    </script>
+</body>
+</html>

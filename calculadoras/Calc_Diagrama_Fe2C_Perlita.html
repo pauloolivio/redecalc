@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagrama Ferro-Carbono</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        canvas {
+            border: 1px solid #ddd;
+            max-width: 100%;
+            height: auto;
+        }
+        input, button {
+            margin: 10px 0;
+            padding: 5px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .inputs {
+            display: flex;
+            flex-direction: column;
+        }
+        .output-box {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        @media (min-width: 768px) {
+            .inputs {
+                flex-direction: row;
+                justify-content: space-between;
+            }
+            .inputs > div {
+                width: 48%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Diagrama Ferro-Carbono</h2>
+        <div class="inputs">
+            <div>
+                <label for="carbonoMetal">% Carbono do Aço (0.022-2.14%):</label>
+                <input type="number" id="carbonoMetal" min="0.022" max="2.14" step="0.001" value="0.4">
+            </div>
+        </div>
+        <button onclick="calcularComposicao()">Calcular Composição</button>
+        
+        <div class="output-box">
+            <h3>Resultados:</h3>
+            <p id="resultadoFerrita"></p>
+            <p id="resultadoCementita"></p>
+            <p id="resultadoPerlita"></p>
+        </div>
+        
+        <canvas id="diagramCanvas" width="650" height="400"></canvas>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('diagramCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function desenharDiagramaBase() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Desenhar eixos
+            ctx.beginPath();
+            ctx.moveTo(75, 50);
+            ctx.lineTo(75, 350);
+            ctx.lineTo(600, 350);
+            ctx.stroke();
+
+            // Rotular eixos
+            ctx.font = '12px Arial';
+            ctx.save();
+            ctx.translate(25, 250);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText('Temperatura (°C)', 0, 0);
+            ctx.restore();
+            ctx.fillText('% Carbono', 280, 390);
+            
+            // Marcar eixos
+            for (let i = 0; i <= 2.14; i += 0.5) {
+                ctx.fillText(i.toFixed(2), 75 + (i * 220), 370);
+            }
+
+            // Desenhar linha de 727°C (A1)
+            ctx.beginPath();
+            ctx.moveTo(75, 59);
+            ctx.lineTo(600, 59);
+            ctx.strokeStyle = 'red';
+            ctx.stroke();
+            ctx.fillStyle = 'red';
+            ctx.fillText('727°C (A1)', 10, 63);
+
+            // Marcar pontos importantes
+            ctx.fillStyle = 'blue';
+            ctx.beginPath();
+            ctx.arc(75 + (0.022 * 220), 59, 5, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.fillText('0.022%C', 75 + (0.022 * 220) - 20, 40);
+
+            ctx.beginPath();
+            ctx.arc(75 + (0.76 * 220), 59, 5, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.fillText('0.76%C', 75 + (0.76 * 220) - 20, 40);
+
+            ctx.beginPath();
+            ctx.arc(75 + (2.14 * 220), 59, 5, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.fillText('2.14%C', 75 + (2.14 * 220) - 20, 40);
+
+            ctx.strokeStyle = 'black';
+            ctx.fillStyle = 'black';
+        }
+
+        function calcularComposicao() {
+            const carbonoMetal = parseFloat(document.getElementById('carbonoMetal').value);
+
+            if (carbonoMetal < 0.022 || carbonoMetal > 2.14) {
+                alert('Por favor, insira um valor de carbono entre 0.022% e 2.14%.');
+                return;
+            }
+
+            desenharDiagramaBase();
+
+            let resultadoFerrita = document.getElementById('resultadoFerrita');
+            let resultadoCementita = document.getElementById('resultadoCementita');
+            let resultadoPerlita = document.getElementById('resultadoPerlita');
+
+            if (carbonoMetal <= 0.022) {
+                resultadoFerrita.textContent = 'Ferrita: 100%';
+                resultadoCementita.textContent = 'Cementita: 0%';
+                resultadoPerlita.textContent = 'Perlita: 0%';
+            } else if (carbonoMetal < 0.76) {
+                const porcentagemFerritaPro = ((0.76 - carbonoMetal) / (0.76 - 0.022)) * 100;
+                const porcentagemPerlita = 100 - porcentagemFerritaPro;
+                resultadoFerrita.textContent = `Ferrita Proeutetóide: ${porcentagemFerritaPro.toFixed(2)}%`;
+                resultadoCementita.textContent = 'Cementita Proeutetóide: 0%';
+                resultadoPerlita.textContent = `Perlita: ${porcentagemPerlita.toFixed(2)}%`;
+            } else if (carbonoMetal === 0.76) {
+                resultadoFerrita.textContent = 'Ferrita Proeutetóide: 0%';
+                resultadoCementita.textContent = 'Cementita Proeutetóide: 0%';
+                resultadoPerlita.textContent = 'Perlita: 100%';
+            } else if (carbonoMetal <= 2.14) {
+                const porcentagemCementitaPro = ((carbonoMetal - 0.76) / (2.14 - 0.76)) * 100;
+                const porcentagemPerlita = 100 - porcentagemCementitaPro;
+                resultadoFerrita.textContent = 'Ferrita Proeutetóide: 0%';
+                resultadoCementita.textContent = `Cementita Proeutetóide: ${porcentagemCementitaPro.toFixed(2)}%`;
+                resultadoPerlita.textContent = `Perlita: ${porcentagemPerlita.toFixed(2)}%`;
+            }
+
+            // Marcar ponto de análise
+            const x = 75 + (carbonoMetal * 220);
+            ctx.fillStyle = 'green';
+            ctx.beginPath();
+            ctx.arc(x, 59, 5, 0, 2 * Math.PI);
+            ctx.fill();
+
+            // Legenda do ponto
+            ctx.fillStyle = 'black';
+            ctx.fillText(`${carbonoMetal.toFixed(3)}%C`, x - 20, 80);
+        }
+
+        // Ajustar o tamanho do canvas quando a janela for redimensionada
+        function ajustarTamanhoCanvas() {
+            const container = document.querySelector('.container');
+            const containerWidth = container.clientWidth;
+            const scale = containerWidth / 650;
+            canvas.style.width = `${containerWidth}px`;
+            canvas.style.height = `${400 * scale}px`;
+        }
+
+        window.addEventListener('resize', ajustarTamanhoCanvas);
+        ajustarTamanhoCanvas();
+        desenharDiagramaBase();
+    </script>
+</body>
+</html>

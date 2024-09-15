@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estudo de Deformação Biaxial</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        canvas {
+            border: 1px solid #000;
+        }
+        .input-group {
+            margin-bottom: 10px;
+        }
+        label {
+            display: inline-block;
+            width: 150px;
+        }
+        input {
+            width: 100px;
+        }
+        #results {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Estudo de Deformação Biaxial</h1>
+    
+    <div class="input-group">
+        <label for="diametro_inicial">Diâmetro inicial:</label>
+        <input type="number" id="diametro_inicial" value="3" step="0.1">
+    </div>
+    <div class="input-group">
+        <label for="elipse_e1">Elipse e1:</label>
+        <input type="number" id="elipse_e1" value="3.6" step="0.1">
+    </div>
+    <div class="input-group">
+        <label for="elipse_e2">Elipse e2:</label>
+        <input type="number" id="elipse_e2" value="2.9" step="0.1">
+    </div>
+    
+    <button onclick="calcularEDesenhar()">Calcular e Desenhar</button>
+    
+    <h2>Desenho Esquemático</h2>
+    <canvas id="schematicCanvas" width="400" height="200"></canvas>
+    
+    <h2>Elipse de von Mises</h2>
+    <canvas id="vonMisesCanvas" width="400" height="400"></canvas>
+    
+    <div id="results"></div>
+
+    <script>
+        let vonMisesChart;
+
+        function tensao_deformacao_verdadeira(diametro_inicial, elipse_e1, elipse_e2) {
+            const e1 = Math.log(elipse_e1 / diametro_inicial);
+            const e2 = Math.log(elipse_e2 / diametro_inicial);
+            const e3 = -(e1 + e2);
+            const e_equivalente = (Math.sqrt(2) / 3) * Math.sqrt((e1 - e2) ** 2 + (e2 - e3) ** 2 + (e3 - e1) ** 2);
+            const sigma_verdadeiro = 300 + 40 * e_equivalente;
+            const quociente_beta = e2 / e1;
+            const quociente_alfa = (2 * quociente_beta + 1) / (quociente_beta + 2);
+            const sigma_1 = (sigma_verdadeiro * 1) / Math.sqrt(1 - quociente_alfa + quociente_alfa ** 2);
+            const sigma_2 = quociente_alfa * sigma_1;
+
+            return { e1, e2, e3, e_equivalente, sigma_verdadeiro, quociente_beta, quociente_alfa, sigma_1, sigma_2 };
+        }
+
+        function von_mises(sigma1, sigma2) {
+            return 1 / Math.sqrt(2) * Math.sqrt((sigma1 - sigma2) ** 2 + sigma2 ** 2 + sigma1 ** 2);
+        }
+
+        function desenharEsquematico(ctx, diametro_inicial, elipse_e1, elipse_e2) {
+            ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+            
+            const centerX = ctx.canvas.width / 2;
+            const centerY = ctx.canvas.height / 2;
+            const scale = 30;
+
+            // Desenhar círculo inicial
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, diametro_inicial * scale / 2, 0, 2 * Math.PI);
+            ctx.strokeStyle = 'blue';
+            ctx.stroke();
+
+            // Desenhar elipse final
+            ctx.beginPath();
+            ctx.ellipse(centerX, centerY, elipse_e2 * scale / 2, elipse_e1 * scale / 2, 0, 0, 2 * Math.PI);
+            ctx.strokeStyle = 'red';
+            ctx.stroke();
+
+            // Adicionar legendas
+            ctx.font = '12px Arial';
+            ctx.fillStyle = 'black';
+            ctx.fillText('Círculo Inicial (azul)', 10, 20);
+            ctx.fillText('Elipse Final (vermelho)', 10, 40);
+        }
+
+        function desenharVonMises(sigma_verdadeiro, sigma_1, sigma_2) {
+            const ctx = document.getElementById('vonMisesCanvas').getContext('2d');
+
+            // Gerar pontos para a elipse de von Mises
+            const numPoints = 1000;
+            const sigma_range = sigma_verdadeiro * 1.2;
+            const vonMisesPoints = [];
+
+            for (let i = 0; i < numPoints; i++) {
+                for (let j = 0; j < numPoints; j++) {
+                    const sigma1 = (i / numPoints) * 2 * sigma_range - sigma_range;
+                    const sigma2 = (j / numPoints) * 2 * sigma_range - sigma_range;
+                    const vm = von_mises(sigma1, sigma2);
+                    if (Math.abs(vm - sigma_verdadeiro) < 0.1) {
+                        vonMisesPoints.push({x: sigma1, y: sigma2});
+                    }
+                }
+            }
+
+            if (vonMisesChart) {
+                vonMisesChart.destroy();
+            }
+
+            vonMisesChart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Elipse de von Mises',
+                        data: vonMisesPoints,
+                        borderColor: 'blue',
+                        backgroundColor: 'rgba(0, 0, 255, 0.1)',
+                        pointRadius: 1,
+                        showLine: false
+                    }, {
+                        label: 'Estado de tensão',
+                        data: [{x: 0, y: 0}, {x: sigma_1, y: sigma_2}],
+                        borderColor: 'red',
+                        backgroundColor: 'red',
+                        pointRadius: 5,
+                        showLine: true
+                    }, {
+                        label: 'Tensão equivalente',
+                        data: [{x: sigma_verdadeiro, y: 0}],
+                        backgroundColor: 'green',
+                        pointRadius: 5
+                    }]
+                },
+                options: {
+                    aspectRatio: 1,
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'center',
+                            title: {
+                                display: true,
+                                text: 'σ1'
+                            },
+                            min: -sigma_range,
+                            max: sigma_range
+                        },
+                        y: {
+                            type: 'linear',
+                            position: 'center',
+                            title: {
+                                display: true,
+                                text: 'σ2'
+                            },
+                            min: -sigma_range,
+                            max: sigma_range
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function calcularEDesenhar() {
+            const diametro_inicial = parseFloat(document.getElementById('diametro_inicial').value);
+            const elipse_e1 = parseFloat(document.getElementById('elipse_e1').value);
+            const elipse_e2 = parseFloat(document.getElementById('elipse_e2').value);
+
+            const resultado = tensao_deformacao_verdadeira(diametro_inicial, elipse_e1, elipse_e2);
+
+            const schematicCtx = document.getElementById('schematicCanvas').getContext('2d');
+            desenharEsquematico(schematicCtx, diametro_inicial, elipse_e1, elipse_e2);
+
+            desenharVonMises(resultado.sigma_verdadeiro, resultado.sigma_1, resultado.sigma_2);
+
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = `
+                <h3>Resultados:</h3>
+                <p>e1: ${resultado.e1.toFixed(4)}</p>
+                <p>e2: ${resultado.e2.toFixed(4)}</p>
+                <p>e3: ${resultado.e3.toFixed(4)}</p>
+                <p>e_equivalente: ${resultado.e_equivalente.toFixed(4)}</p>
+                <p>sigma_verdadeiro: ${resultado.sigma_verdadeiro.toFixed(4)}</p>
+                <p>quociente_beta: ${resultado.quociente_beta.toFixed(4)}</p>
+                <p>quociente_alfa: ${resultado.quociente_alfa.toFixed(4)}</p>
+                <p>sigma_1: ${resultado.sigma_1.toFixed(4)}</p>
+                <p>sigma_2: ${resultado.sigma_2.toFixed(4)}</p>
+            `;
+        }
+
+        // Inicializar os gráficos com os valores padrão
+        calcularEDesenhar();
+    </script>
+</body>
+</html>

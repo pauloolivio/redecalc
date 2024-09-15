@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo de Perguntas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            margin: 20px 0;
+        }
+        .alternativas {
+            list-style: none;
+            padding: 0;
+        }
+        .alternativas li {
+            margin: 10px 0;
+        }
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #aluno-info{
+            margin-top: 10px;
+            margin-botton: 10px;
+            padding: 10px 20px;
+            background-color: purple;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #pergunta{
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        .correta {
+            color: blue;
+        }
+        .errada {
+            color: red;
+        }
+        #resultado {
+            margin-top: 20px;
+        }
+        #tela-final {
+            display: none;
+        }
+        .trofeu {
+            font-size: 50px;
+            color: gold;
+        }
+        .contador {
+            margin: 10px 0;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container" id="tela-jogo">
+    <h1>Jogo de Perguntas</h1>
+    <div class="contador">Equipe A: <span id="contador-a">0</span> | Equipe B: <span id="contador-b">0</span></div>
+    <div id="aluno-info"></div>
+    <div id="pergunta"></div>
+    <img id="imagem" src="" alt="Imagem da questão">
+    <ul class="alternativas" id="alternativas"></ul>
+    <div id="resultado"></div>
+    <button id="verificar-resposta">Verificar Resposta</button>
+    <button id="novo-jogo">Novo Aluno e Questão</button>
+</div>
+
+<div class="container" id="tela-final">
+    <h1>Resultados Finais</h1>
+    <div id="resultado-final"></div>
+    <button id="reiniciar-jogo">Reiniciar Jogo</button>
+</div>
+
+<script>
+    const alunos = [
+        { nome: "João", ra: "Equipe A" },
+        { nome: "Maria", ra: "Equipe A" },
+        { nome: "Pedro", ra: "Equipe B" },
+        { nome: "Matheus", ra: "Equipe B" },
+    ];
+
+    const questoes = [
+        {
+            pergunta: "Qual das opções abaixo é verdadeira sobre a imagem?",
+            imagem: "https://via.placeholder.com/300",
+            alternativas: [
+                { texto: "Opção A", correta: false },
+                { texto: "Opção B", correta: true },
+                { texto: "Opção C", correta: true },
+                { texto: "Opção D", correta: false }
+            ]
+        },
+        {
+            pergunta: "O que você pode concluir a partir da imagem?",
+            imagem: "https://via.placeholder.com/300",
+            alternativas: [
+                { texto: "Opção A", correta: true },
+                { texto: "Opção B", correta: false },
+                { texto: "Opção C", correta: false },
+                { texto: "Opção D", correta: true }
+            ]
+        }
+    ];
+
+    let questaoAtual = {};
+    let alunosSorteados = [];
+    let acertosEquipeA = 0;
+    let acertosEquipeB = 0;
+
+    function sortearAluno() {
+        const alunosDisponiveis = alunos.filter(aluno => !alunosSorteados.includes(aluno.nome));
+        if (alunosDisponiveis.length === 0) {
+            exibirResultadoFinal();
+            return null;
+        }
+        const aluno = alunosDisponiveis[Math.floor(Math.random() * alunosDisponiveis.length)];
+        alunosSorteados.push(aluno.nome);
+        return aluno;
+    }
+
+    function sortearQuestao() {
+        return questoes[Math.floor(Math.random() * questoes.length)];
+    }
+
+    function atualizarContadores() {
+        document.getElementById('contador-a').innerText = acertosEquipeA;
+        document.getElementById('contador-b').innerText = acertosEquipeB;
+    }
+
+    function iniciarJogo() {
+        const aluno = sortearAluno();
+        if (!aluno) return;
+
+        questaoAtual = sortearQuestao();
+
+        document.getElementById('aluno-info').innerHTML = `Nome: ${aluno.nome} | RA: ${aluno.ra}`;
+        document.getElementById('pergunta').innerText = questaoAtual.pergunta;
+        document.getElementById('imagem').src = questaoAtual.imagem;
+
+        const alternativasElement = document.getElementById('alternativas');
+        alternativasElement.innerHTML = '';
+        questaoAtual.alternativas.forEach((alternativa, index) => {
+            const li = document.createElement('li');
+            li.innerHTML = `<input type="checkbox" id="alt${index}" value="${alternativa.correta}"> ${alternativa.texto}`;
+            alternativasElement.appendChild(li);
+        });
+
+        document.getElementById('resultado').innerHTML = '';
+    }
+
+    function verificarResposta() {
+        const alternativas = document.querySelectorAll('.alternativas input[type="checkbox"]');
+        const respostasCorretas = [];
+        const respostasErradas = [];
+        let acertou = true;
+
+        alternativas.forEach((alt, index) => {
+            if (alt.checked) {
+                if (questaoAtual.alternativas[index].correta) {
+                    respostasCorretas.push(questaoAtual.alternativas[index].texto);
+                } else {
+                    respostasErradas.push(questaoAtual.alternativas[index].texto);
+                    acertou = false;
+                }
+            } else if (questaoAtual.alternativas[index].correta) {
+                respostasCorretas.push(questaoAtual.alternativas[index].texto);
+            }
+        });
+
+        const resultadoElement = document.getElementById('resultado');
+        resultadoElement.innerHTML = '';
+
+        const equipe = document.getElementById('aluno-info').innerText.includes('Equipe A') ? 'A' : 'B';
+
+        // Verificando se todas as respostas corretas foram selecionadas
+        const totalCorretas = questaoAtual.alternativas.filter(a => a.correta).length;
+        const totalSelecionadas = Array.from(alternativas).filter(a => a.checked && questaoAtual.alternativas[a.id.replace('alt', '')].correta).length;
+
+        if (totalCorretas === totalSelecionadas && totalCorretas > 0) {
+            resultadoElement.innerHTML = `<p>Parabéns! Você acertou: <span class="correta">${respostasCorretas.join(', ')}</span></p>`;
+            if (equipe === 'A') {
+                acertosEquipeA++;
+            } else {
+                acertosEquipeB++;
+            }
+            atualizarContadores();
+        } else {
+            resultadoElement.innerHTML = `<p>Não foi dessa vez! Tente de novo.</p>
+            <p>Corretas: <span class="correta">${respostasCorretas.join(', ')}</span></p>
+            <p>Erradas: <span class="errada">${respostasErradas.join(', ')}</span></p>`;
+        }
+    }
+
+    function exibirResultadoFinal() {
+        document.getElementById('tela-jogo').style.display = 'none';
+        document.getElementById('tela-final').style.display = 'block';
+
+        const resultadoFinal = document.getElementById('resultado-final');
+        resultadoFinal.innerHTML = `<p>Equipe A: ${acertosEquipeA} acertos</p>
+                                    <p>Equipe B: ${acertosEquipeB} acertos</p>`;
+
+        if (acertosEquipeA > acertosEquipeB) {
+            resultadoFinal.innerHTML += `<div class="trofeu">🏆</div>
+                                          <p>Parabéns, Equipe A! Vocês venceram!</p>`;
+        } else if (acertosEquipeB > acertosEquipeA) {
+            resultadoFinal.innerHTML += `<div class="trofeu">🏆</div>
+                                          <p>Parabéns, Equipe B! Vocês venceram!</p>`;
+        } else {
+            resultadoFinal.innerHTML += `<p>Empate! Ótimo trabalho, equipes!</p>`;
+        }
+    }
+
+    document.getElementById('verificar-resposta').addEventListener('click', verificarResposta);
+    document.getElementById('novo-jogo').addEventListener('click', () => {
+        iniciarJogo();
+    });
+    document.getElementById('reiniciar-jogo').addEventListener('click', () => {
+        window.location.reload();
+    });
+
+    iniciarJogo();
+</script>
+
+</body>
+</html>

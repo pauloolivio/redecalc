@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cálculo de Forças Resultantes</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+        }
+        #inputContainer {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            
+        }
+        .force-input {
+            display: flex;
+            flex-direction: column;
+            margin: 0 10px 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        input, button {
+            margin: 15px 0;
+            padding: 10px;
+        }
+        canvas {
+            border: 1px solid #000;
+            max-width: 100%;
+            height: auto;
+        }
+        #resultContainer {
+            margin-top: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Cálculo de Forças Resultantes</h1>
+    <div id="inputContainer">
+        <div class="force-input">
+            <h3>Força 1</h3>
+            <input type="number" id="intensity1" placeholder="Intensidade" value="100">
+            <input type="number" id="angle1" placeholder="Ângulo (graus)" value="0">
+        </div>
+        <div class="force-input">
+            <h3>Força 2</h3>
+            <input type="number" id="intensity2" placeholder="Intensidade" value="100">
+            <input type="number" id="angle2" placeholder="Ângulo (graus)" value="120">
+        </div>
+        <div class="force-input">
+            <h3>Força 3</h3>
+            <input type="number" id="intensity3" placeholder="Intensidade" value="100">
+            <input type="number" id="angle3" placeholder="Ângulo (graus)" value="240">
+        </div>
+    </div>
+    <button onclick="calculateAndDraw()">Calcular e Desenhar</button>
+    <canvas id="forceCanvas" width="400" height="400"></canvas>
+    <div id="resultContainer"></div>
+
+    <script>
+        const canvas = document.getElementById('forceCanvas');
+        const ctx = canvas.getContext('2d');
+        let centerX, centerY, scale;
+
+        function drawAxis() {
+            ctx.beginPath();
+            ctx.moveTo(0, centerY);
+            ctx.lineTo(canvas.width, centerY);
+            ctx.moveTo(centerX, 0);
+            ctx.lineTo(centerX, canvas.height);
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // Draw angle labels
+            ctx.fillStyle = '#000';
+            ctx.font = `${10 * scale}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('0°', canvas.width - 10 * scale, centerY - 10 * scale);
+            ctx.fillText('360°', canvas.width - 10 * scale, centerY + 10 * scale);
+            ctx.fillText('90°', centerX + 15 * scale, 10 * scale);
+            ctx.fillText('180°', 20 * scale, centerY - 10 * scale);
+            ctx.fillText('270°', centerX + 15 * scale, canvas.height - 10 * scale);
+            }
+
+        function resizeCanvas() {
+            const containerWidth = Math.min(window.innerWidth - 40, 600);
+            canvas.width = containerWidth;
+            canvas.height = containerWidth;
+            centerX = canvas.width / 2;
+            centerY = canvas.height / 2;
+            scale = containerWidth / 300;
+            calculateAndDraw();
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function drawGrid() {
+            ctx.strokeStyle = '#ddd';
+            ctx.lineWidth = 0.5;
+            for (let i = 0; i <= canvas.width; i += 20 * scale) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, canvas.height);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(canvas.width, i);
+                ctx.stroke();
+            }
+        }
+
+        function drawAxis() {
+            ctx.beginPath();
+            ctx.moveTo(0, centerY);
+            ctx.lineTo(canvas.width, centerY);
+            ctx.moveTo(centerX, 0);
+            ctx.lineTo(centerX, canvas.height);
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+
+        function drawVector(x, y, color) {
+            const endX = centerX + x * scale;
+            const endY = centerY - y * scale;
+            
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(endX, endY);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(endX, endY, 5 * scale, 0, 2 * Math.PI);
+            ctx.fillStyle = color;
+            ctx.fill();
+        }
+
+        function calculateForceComponents(intensity, angle) {
+            const radians = angle * Math.PI / 180;
+            return {
+                x: intensity * Math.cos(radians),
+                y: intensity * Math.sin(radians)
+            };
+        }
+
+        function calculateAndDraw() {
+            const forces = [
+                { intensity: parseFloat(document.getElementById('intensity1').value), angle: parseFloat(document.getElementById('angle1').value) },
+                { intensity: parseFloat(document.getElementById('intensity2').value), angle: parseFloat(document.getElementById('angle2').value) },
+                { intensity: parseFloat(document.getElementById('intensity3').value), angle: parseFloat(document.getElementById('angle3').value) }
+            ];
+
+            let totalX = 0;
+            let totalY = 0;
+            const colors = ['red', 'green', 'blue'];
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawGrid();
+            drawAxis();
+
+            let resultHTML = '<h2>Resultados:</h2>';
+
+            forces.forEach((force, index) => {
+                const components = calculateForceComponents(force.intensity, force.angle);
+                totalX += components.x;
+                totalY += components.y;
+
+                drawVector(components.x, components.y, colors[index]);
+
+                resultHTML += `
+                    <p>Força ${index + 1}:<br>
+                    Fx = ${components.x.toFixed(2)}<br>
+                    Fy = ${components.y.toFixed(2)}</p>
+                `;
+            });
+
+            const resultantForce = Math.sqrt(totalX * totalX + totalY * totalY);
+            const resultantAngle = Math.atan2(totalY, totalX) * 180 / Math.PI;
+
+            drawVector(totalX, totalY, 'black');
+
+            resultHTML += `
+                <p>Força Resultante Total:<br>
+                Intensidade = ${resultantForce.toFixed(2)}<br>
+                Ângulo = ${resultantAngle.toFixed(2)}°<br>
+                Fx = ${totalX.toFixed(2)}<br>
+                Fy = ${totalY.toFixed(2)}</p>
+            `;
+
+            document.getElementById('resultContainer').innerHTML = resultHTML;
+        }
+
+        // Initial draw
+        calculateAndDraw();
+    </script>
+</body>
+</html>

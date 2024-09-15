@@ -1,0 +1,149 @@
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+}
+
+.container {
+    width: 95%;
+    max-width: 1200px;
+    margin: auto;
+    padding: 10px;
+}
+
+h1, h2, h3 {
+    color: #333;
+}
+
+.input-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.input-section {
+    flex: 1 1 100%;
+    background-color: #fff;
+    padding: 15px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 10px;
+}
+
+.input-group label {
+    margin-bottom: 5px;
+}
+
+.input-group input {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    font-size: 14px;
+}
+
+.composition-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 10px;
+}
+
+.dilution {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #fff;
+    padding: 15px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.dilution .input-group {
+    flex: 1 1 auto;
+    margin-right: 10px;
+}
+
+button {
+    padding: 10px 20px;
+    background-color: #333;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    font-size: 14px;
+    width: 100%;
+    margin-top: 10px;
+}
+
+button:hover {
+    background-color: #555;
+}
+
+.results-section {
+    background-color: #fff;
+    padding: 15px;
+    margin-top: 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.chart-container {
+    background-color: #fff;
+    margin-top: 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    height: 50vh;
+    width: 100%;
+    position: relative;
+}
+
+@media (min-width: 768px) {
+    .input-section {
+        flex: 1 1 calc(50% - 10px);
+    }
+
+    .dilution {
+        flex-direction: row;
+    }
+
+    .dilution .input-group {
+        margin-bottom: 0;
+    }
+
+    button {
+        width: auto;
+        margin-top: 0;
+    }
+
+    .chart-container {
+        height: 60vh;
+    }
+}
+
+@media (min-width: 1024px) {
+    .container {
+        width: 90%;
+        padding: 20px;
+    }
+
+    .input-group input {
+        font-size: 16px;
+    }
+
+    button {
+        font-size: 16px;
+    }
+
+    .chart-container {
+        height: 70vh;
+    }
+}

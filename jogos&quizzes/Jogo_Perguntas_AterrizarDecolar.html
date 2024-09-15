@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solda - Aula 5, Aterrisar e Decolar</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f0f0;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            color: black;
+        }
+        h2 {
+            text-align: center;
+            color: black;
+        }
+        .question {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .feedback {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .correct {
+            color: #27ae60;
+        }
+        .incorrect {
+            color: #c0392b;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        #score {
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-bottom: 20px;
+        }
+        #result {
+            text-align: center;
+            font-size: 1.5em;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            .question {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Soldagem - Aula 5</h1>
+    <h2>Jogo - Aterrizar e Decolar</h1>
+    <p><strong>Pergunta problema:</strong> Se por algum motivo eu tiver que reparar um peça feita de AISI 440. O que devo fazer?</p>
+    <div id="score">Pontuação: 0</div>
+    <div id="quiz"></div>
+    <div id="result"></div>
+    <script>
+        const questions = [
+            {
+                question: "1. Soldar o aço AISI 440, é uma tarefa fácil?",
+                correctAnswer: "não",
+                explanation: "Não, o material pode fraturar devido a formação martensítica."
+            },
+            {
+                question: "2. Posso soldar o material com o AISI 420?",
+                correctAnswer: "não",
+                explanation: "Não, o material é menos nobre e induzirá martensita na solda."
+            },
+            {
+                question: "3. Posso soldar o material com um consumível austeniítico compatível?",
+                correctAnswer: "sim",
+                explanation: "Sim, pois a austenita é mais dúctil e absorve a tensão na formação martensítica."
+            },
+            {
+                question: "4. Posso soldar com eletrodo revestido (SMAW)?",
+                correctAnswer: "sim",
+                explanation: "Sim, contudo, o fluxo não garante uma solda totalmente protegida, livre de oxidação e hidrogênio."
+            },
+            {
+                question: "5. Posso usar eletrodo exposto a umidade?",
+                correctAnswer: "não",
+                explanation: "Não, a umidade do eletrodo, não garantirá a qualidade mínima da solda, produzindo mais oxidação e difusão do hidrogênio na poça fundida."
+            },
+            {
+                question: "6. Soldar com TIG (GTAW) é a melhor opção?",
+                correctAnswer: "sim",
+                explanation: "Sim, pois o processo é mais limpo, e reduz a possibilidade de fragilização a frio induzida por hidrogênio."
+            },
+            {
+                question: "7. Realizar pré-aquecimento no metal de base é a coisa certa a se fazer?",
+                correctAnswer: "sim",
+                explanation: "Sim, pois o pré-aquecimento garantirá uma taxa de resfriamento mais lenta e atenuará a formação martensítica."
+            },
+            {
+                question: "8. Devo realizar tratamentos pós soldagem?",
+                correctAnswer: "sim",
+                explanation: "Sim, mas devo verificar a possibilidade de precipitação de fases frágeis ou fratura durante o revenido."
+            },
+            {
+                question: "9. Como engenheiro e soldador, posso garantir uma peça reparada de qualidade?",
+                correctAnswer: "não",
+                explanation: "Não, nesse caso, a solda é um procedimento provisório e a peça deve ser substituída."
+            }
+        ];
+
+        const quizContainer = document.getElementById('quiz');
+        const scoreElement = document.getElementById('score');
+        const resultElement = document.getElementById('result');
+
+        let score = 0;
+        let consecutiveCorrect = 0;
+        let answeredQuestions = 0;
+
+        questions.forEach((q, index) => {
+            const questionDiv = document.createElement('div');
+            questionDiv.className = 'question';
+            questionDiv.innerHTML = `
+                <p>${q.question}</p>
+                <button onclick="checkAnswer(${index}, 'sim')">Sim</button>
+                <button onclick="checkAnswer(${index}, 'não')">Não</button>
+                <div id="feedback-${index}" class="feedback"></div>
+            `;
+            quizContainer.appendChild(questionDiv);
+        });
+
+        function checkAnswer(index, answer) {
+            const feedback = document.getElementById(`feedback-${index}`);
+            if (answer.toLowerCase() === questions[index].correctAnswer) {
+                feedback.innerHTML = `<span class="correct">Correto! ${questions[index].explanation}</span>`;
+                consecutiveCorrect++;
+                score += 10 * consecutiveCorrect;
+            } else {
+                feedback.innerHTML = `<span class="incorrect">Incorreto. ${questions[index].explanation}</span>`;
+                consecutiveCorrect = 0;
+            }
+            scoreElement.textContent = `Pontuação: ${score}`;
+            answeredQuestions++;
+            
+            if (answeredQuestions === questions.length) {
+                showResult();
+            }
+        }
+
+        function showResult() {
+            const percentage = (score / (questions.length * 10)) * 100;
+            let message = '';
+            
+            if (percentage >= 80) {
+                message = '🏆 Parabéns! Você ganhou o troféu de ouro!';
+            } else if (percentage >= 60) {
+                message = '🥈 Muito bem! Você ganhou o troféu de prata!';
+            } else {
+                message = '🥉 Você ganhou o troféu de bronze. Que tal tentar novamente para melhorar sua pontuação?';
+            }
+            
+            resultElement.innerHTML = `${message}<br>Sua pontuação final: ${score} (${percentage.toFixed(2)}%)`;
+        }
+    </script>
+</body>
+</html>

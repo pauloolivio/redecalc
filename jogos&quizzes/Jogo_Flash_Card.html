@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo de Flash Cards</title>
+    <style>
+        body {
+            font-family: 'Georgia', serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+           
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            text-align: center;
+        }
+        .card {
+            width: 300px;
+            height: 400px;
+            perspective: 1000px;
+            cursor: pointer;
+            margin: 10px auto;
+        }
+        .card-inner {
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: transform 0.3s, opacity 0.3s;
+            position: relative;
+        }
+        .card.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+        .card.hidden .card-inner {
+            opacity: 0;
+        }
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            padding: 20px;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+        .card-front, .card-back {
+            background-color: #f9f9f9;
+            color: #333;
+            border: 2px solid #d4af37;
+        }
+        .card-back {
+            transform: rotateY(180deg);
+        }
+        .card-content {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .card-border {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            border: 2px solid #d4af37;
+            border-radius: 10px;
+            pointer-events: none;
+        }
+        .card-emblem {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            top: 20px;
+            left: 20px;
+            border: 2px solid #d4af37;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: #d4af37;
+        }
+        .card-emblem::before {
+            content: "Q";
+        }
+        .card-back .card-emblem::before {
+            content: "A";
+        }
+        #question, #answer {
+            font-size: 18px;
+            text-align: center;
+            max-width: 80%;
+        }
+        #progress {
+            margin-top: 10px;
+            font-size: 18px;
+        }
+        #timer {
+            font-size: 24px;
+            margin-top: 10px;
+            color: #d9534f;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 10px;
+            background-color: #d4af37;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        .button:hover {
+            background-color: #c49b30;
+        }
+        #startScreen {
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        #gameScreen {
+            display: none;
+        }
+       
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="startScreen">
+            <h1>Quem não Solda, passa Cola!</h1>
+            <h2>Jogo de Flash Cards</h2>
+            <h2>Instruções:</h2>
+            <ol>
+                <li>Você serão separados em 2 equipes.</li>
+                <li>Cada aluno deverá responder uma questão.</li>
+                <li>O aluno poderá pedir cola no tempo arbitrado</li>
+                <li>As questões são aleatórias</li>
+                <li>Clique na carta para ver a pergunta.</li>
+                <li>Você tem 10 segundos para responder cada pergunta.</li>
+                <li>Responda a pergunta em voz alta.</li>
+                <li>Clique sobre o cartão para ver a resposta.</li>
+                <li>Clique mais uma vez para ir para a próxima pergunta.</li>
+                <li>O jogo termina após 10 perguntas.</li>
+                <li>A equipe que mais acertar as respostas, vence.</li>
+            </ol>
+            <button class="button" onclick="startGame()">Começar o Jogo</button>
+        </div>
+
+        <div id="gameScreen">
+            <h1>Quem não Solda, passa Cola!</h1>
+            <div class="card" id="card">
+                <div class="card-inner">
+                    <div class="card-face card-front">
+                        <div class="card-border"></div>
+                        <div class="card-emblem"></div>
+                        <div class="card-content">
+                            <p id="question"></p>
+                        </div>
+                    </div>
+                    <div class="card-face card-back">
+                        <div class="card-border"></div>
+                        <div class="card-emblem"></div>
+                        <div class="card-content">
+                            <p id="answer"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="progress"></div>
+            <div id="timer">10</div>
+            <button class="button" onclick="restartGame()">Reiniciar</button>
+            <button class="button" onclick="goBack()">Voltar</button>
+        </div>
+    </div>
+
+    <audio id="endSound" src="sound.mp3"></audio>
+
+    <script>
+        const questions = [
+        { q: "Por que a adição de níquel é crucial na composição de aços inoxidáveis austeníticos?" ,a: "O níquel é adicionado para estabilizar a fase austenítica em temperaturas ambiente, garantindo a ductilidade e resistência à corrosão do aço, especialmente em ambientes contendo cloretos."}, 
+        { q: "Qual é o impacto de reduzir o teor de carbono abaixo de 0,03% nos aços inoxidáveis austeníticos?" ,a: "Reduzir o teor de carbono abaixo de 0,03% aumenta significativamente a resistência à corrosão intergranular, pois minimiza a formação de carbonetos de cromo nos contornos de grão."},
+        { q: "Como o aumento do cromo acima de 18% afeta a resistência à corrosão em aços inoxidáveis austeníticos?" ,a: "Aumentar o teor de cromo acima de 18% melhora a resistência à maioria dos tipos de corrosão, especialmente a corrosão uniforme e por pites, devido à formação de uma camada passiva mais robusta de óxido de cromo."},
+        { q: "Por que o molibdênio é adicionado a alguns aços inoxidáveis austeníticos?" ,a: "O molibdênio é adicionado para melhorar a resistência à corrosão por pites e frestas, tornando o aço mais resistente em ambientes agressivos contendo cloretos."}, 
+        { q: "O que ocorre se a soldagem de aços inoxidáveis austeníticos não estabilizados for feita sem metal de adição?" ,a: "Se a soldagem for feita sem metal de adição, é crucial limitar a composição química para assegurar que a solidificação ocorra com ferrita delta primária, evitando fissuração a quente."},
+        { q: "Como a ferrita delta influencia a soldabilidade de aços inoxidáveis austeníticos?" ,a: "A presença de ferrita delta na faixa de 5-15 FN no metal de solda melhora a resistência à fissuração durante a solidificação, proporcionando uma combinação de tenacidade e resistência à corrosão."},
+        { q: "Por que tratamentos térmicos pós-soldagem geralmente são evitados em aços inoxidáveis austeníticos?" ,a: "Tratamentos térmicos pós-soldagem são evitados porque podem levar à precipitação de carbonetos e fases frágeis, o que compromete a resistência à corrosão e a tenacidade do material."},
+        { q: "Qual é o efeito da precipitação da fase sigma em aços inoxidáveis austeníticos?" ,a: "A precipitação da fase sigma reduz significativamente a tenacidade e a resistência à corrosão do material, especialmente em altas temperaturas, e deve ser evitada."},
+        { q: "Como a diluição excessiva durante a soldagem pode afetar a integridade do metal de solda em aços inoxidáveis austeníticos?" ,a: "A diluição excessiva pode alterar a composição química do metal de solda, comprometendo a solidificação com ferrita delta e aumentando o risco de fissuração a quente e corrosão galvânica."}, 
+        { q: "Por que a resistência à corrosão sob tensão é melhorada com o aumento do níquel em aços inoxidáveis austeníticos?" ,a: "O aumento do níquel na matriz austenítica reduz a sensibilidade à corrosão sob tensão, especialmente em ambientes contendo cloretos, devido à maior estabilidade da estrutura austenítica e menor tendência à formação de martensita."}
+        ];
+
+        let currentQuestions = [];
+        let currentIndex = 0;
+        let timer;
+        let countdown;
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function initGame() {
+            shuffleArray(questions);
+            currentQuestions = questions.slice(0, 10);
+            currentIndex = 0;
+            updateCard();
+            updateProgress();
+        }
+
+        function startGame() {
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('gameScreen').style.display = 'block';
+            initGame();
+        }
+
+        function restartGame() {
+            initGame();
+        }
+
+        function goBack() {
+            document.getElementById('gameScreen').style.display = 'none';
+            document.getElementById('startScreen').style.display = 'block';
+            clearInterval(countdown);
+        }
+
+        function startTimer() {
+            let timeLeft = 10;
+            const timerElement = document.getElementById('timer');
+            timerElement.textContent = timeLeft;
+
+            clearInterval(countdown);
+            countdown = setInterval(() => {
+                timeLeft--;
+                timerElement.textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(countdown);
+                    document.getElementById('endSound').play();
+                }
+            }, 1000);
+        }
+
+        function updateCard() {
+            const questionElement = document.getElementById('question');
+            const answerElement = document.getElementById('answer');
+            const card = document.getElementById('card');
+
+            if (currentIndex < currentQuestions.length) {
+                questionElement.textContent = currentQuestions[currentIndex].q;
+                answerElement.textContent = currentQuestions[currentIndex].a;
+                card.classList.remove('flipped');
+                card.classList.remove('hidden');
+                startTimer();
+            } else {
+                // Exibe a mensagem de fim de jogo
+                questionElement.textContent = "";
+                answerElement.textContent = "Parabéns, você terminou o jogo!";
+                card.classList.remove('flipped');
+                card.classList.remove('hidden');
+                clearInterval(countdown);
+                document.getElementById('endSound').play();
+            }
+        }
+
+        function updateProgress() {
+            const progressElement = document.getElementById('progress');
+            progressElement.textContent = `Progresso: ${currentIndex} / ${currentQuestions.length}`;
+        }
+
+        document.getElementById('card').addEventListener('click', function() {
+            const card = document.getElementById('card');
+            
+            if (!card.classList.contains('flipped')) {
+                card.classList.add('flipped');
+            } else {
+                if (currentIndex < currentQuestions.length) {
+                    card.classList.add('hidden');
+                    setTimeout(() => {
+                        currentIndex++;
+                        updateCard();
+                        updateProgress();
+                    }, 300);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

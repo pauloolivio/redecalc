@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" media="all" href="../assets/application-b0b91461d093aa2ed95d8a7467856e4dc16f55744d3c17a927c3598e5b26cd3f.css" data-turbolinks-track="true" />
+    <title>Lista de Itens</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: #2C3E50;
+        }
+        h1 {
+            font-family: inherit;
+            font-weight: bold;
+            text-align: center;
+            color: #2C3E50;
+        }
+        .container {
+            max-width: 1000px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .titulo {
+            margin-top: 15px;
+            margin-bottom: 15px;
+            padding: 15px;
+            border: 2px solid #dddddd;
+            border-radius: 5px;
+            background-color: #e2e2e2;
+        }
+        .item {
+            margin-bottom: 15px;
+            padding: 15px;
+            border: 2px solid #dddddd;
+            border-radius: 5px;
+        }
+        .item h2 {
+            margin: 0;
+            font-size: 1.5em;
+            color: #000000;
+
+        }
+        .item h2 a {
+            text-decoration: none;
+            color: #2C3E50;
+            font-weight: bold;
+
+        }
+        .item h2 a:hover {
+            text-decoration: underline;
+        }
+        .item p {
+            margin: 5px 0;
+            color: #555;
+        }
+        @media (max-width: 600px) {
+            .item h2 {
+                font-size: 1.2em;
+            }
+            h1 {
+                font-size: 1.5em; /* Tamanho reduzido para smartphones */
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="user-app"></div>
+    <a class="btn btn-default btn-sm" href="/index.html">
+        <i class="glyphicon glyphicon glyphicon-home"></i> Página Principal
+    </a>
+    <div class="titulo">
+    <h1>Calculadoras para realização de atividade com feedback</h1>
+    </div>
+    
+    <div class="item">
+        <h2><a href="/calculadoras/Calc_CLC.html">1. Geradora da curva limite de conformação</a></h2>
+        <p>Esse programa calcula a deformação biaxial para varios pontos a partir do ensaio de Nakazima ou de Marciniak, e apresenta o desenho da deformações e o grafico da curva limite de conformação.</p>
+    </div>
+    
+    <div class="item">
+        <h2><a href="/calculadoras/Calc_DecomposicaoVetor.html">2. Calcula a decomposição de vetores de força</a></h2>
+        <p>Esse programa calcula a decomposição de vetores de força no plano, dado o ângulo e a intensidade do vetor.</p>
+    </div>
+    
+    <div class="item">
+        <h2><a href="/calculadoras/Calc_Diagrama_Fe2C_Perlita.html">3. Calcula a porcentagem de perlita na liga Fe-C</h2>
+        <p>Esse programa calcula a porcentagem de perlita e cementita a partir da regra da balança, aplicada ao diagrama ferro-carbono e apresenta os pontos graficamente.</p>
+    </div>
+    <div class="item">
+        <h2><a href="/calculadoras/Calc_ForçaResultante2D.html">4. Calcula a força resultante com forças bidimensionais</a></h2>
+        <p>Esse programa calcula a decomposição de vetores de força no plano e calcula a força resultade a partir dos vetores de força apresentados.</p>
+    </div>
+    <div class="item">
+        <h2><a href="/calculadoras/Calc_ForçaResultante3D.html">5. Calcula a força resultante com forças tridimensionais</a></h2>
+        <p>Esse programa calcula a decomposição de vetores de força tridimensionais e calcula a força resultade a partir dos vetores de força apresentados.</p>
+    </div>
+    <div class="item">
+        <h2><a href="/calculadoras/Calc_Parametro_Solda.html">6. Verifica o parâmetro de soldagem escolhido e simula procedimento.</a></h2>
+        <p>Esse programa verifica a configuração de soldagem e apresenta o padrão de solda configurado.</p>
+    </div>
+    <div class="item">
+        <h2><a href="/calculadoras/Calc_Simulador_Cordao_Solda.html">7. Simula a formação de um cordão de solda</a></h2>
+        <p>Esse programa calcula o aporte termico do processo de soldagem e simula a largura, progundidade de soldagem e o tamanho do cordão. </p>
+    </div>
+    <div class="item">
+        <h2><a href="/calculadoras/Calc_Tensão_Deformacao_Biaxial.html">8. Calcula a tensão equivalente em deformação biaxial</a></h2>
+        <p>Esse programa calcula a deformação verdadeira, a deformação equivalente e a tensão equivalente a partir da deformação biaxial gerada no componente.</p>
+    </div>
+</div>
+
+</body>
+</html>

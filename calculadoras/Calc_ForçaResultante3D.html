@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cálculo de Forças Resultantes em 3D</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+        #inputContainer {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .force-input {
+            display: flex;
+            flex-direction: column;
+            margin: 0 10px 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        input, button {
+            margin: 5px 0;
+            padding: 5px;
+        }
+        canvas {
+            border: 1px solid #000;
+            max-width: 100%;
+            height: auto;
+        }
+        #resultContainer {
+            margin-top: 20px;
+            text-align: center;
+        }
+        p{
+            margin: 0;
+            padding: 0;
+            border: 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Cálculo de Forças Resultantes em 3D</h1>
+    <div id="inputContainer">
+        <div class="force-input">
+            <h3>Força 1 (Vermelho - Eixo X)</h3>
+            <p>Intensidade:</p>
+            <input type="number" id="f1" placeholder="F1" value="-50">
+            <p>Medida no eixo x1:</p>
+            <input type="number" id="x1" placeholder="X" value="3">
+            <p>Medida no eixo y1:</p>
+            <input type="number" id="y1" placeholder="Y" value="0">
+            <p>Medida no eixo z1:</p>
+            <input type="number" id="z1" placeholder="Z" value="0">
+        </div>
+        <div class="force-input">
+            <h3>Força 2 (Verde - Eixo Y)</h3>
+            <p>Intensidade:</p>
+            <input type="number" id="f2" placeholder="F2" value="50">
+            <p>Medida no eixo x2:</p>
+            <input type="number" id="x2" placeholder="X" value="0">
+            <p>Medida no eixo y2:</p>
+            <input type="number" id="y2" placeholder="Y" value="2">
+            <p>Medida no eixo z2:</p>
+            <input type="number" id="z2" placeholder="Z" value="0">
+        </div>
+        <div class="force-input">
+            <h3>Força 3 (Azul - Eixo Z)</h3>
+            <p>Intensidade:</p>
+            <input type="number" id="f3" placeholder="F3" value="50">
+            <p>Medida no eixo x3:</p>
+            <input type="number" id="x3" placeholder="X" value="0">
+            <p>Medida no eixo y3:</p>
+            <input type="number" id="y3" placeholder="Y" value="0">
+            <p>Medida no eixo z3:</p>
+            <input type="number" id="z3" placeholder="Z" value="3">
+        </div>
+    </div>
+    <button onclick="calculateAndDraw()">Calcular e Desenhar</button>
+    <canvas id="forceCanvas" width="600" height="600"></canvas>
+    <div id="resultContainer"></div>
+
+    <script>
+        const canvas = document.getElementById('forceCanvas');
+        const ctx = canvas.getContext('2d');
+        let centerX, centerY, scale;
+
+        function resizeCanvas() {
+            const containerWidth = Math.min(window.innerWidth - 40, 600);
+            canvas.width = containerWidth;
+            canvas.height = containerWidth;
+            centerX = canvas.width / 2;
+            centerY = canvas.height / 2;
+            scale = containerWidth / 300;
+            calculateAndDraw();
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function drawAxis() {
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 1;
+
+            // X-axis (red)
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(centerX + 140 * scale, centerY - 70 * scale);
+            ctx.lineTo(centerX - 140 * scale, centerY + 70 * scale);
+            ctx.strokeStyle = 'red';
+            ctx.stroke();
+
+            // Y-axis (green)
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(centerX + 140 * scale, centerY + 70 * scale);
+            ctx.lineTo(centerX - 140 * scale, centerY - 70 * scale);
+            ctx.strokeStyle = 'green';
+            ctx.stroke();
+
+            // Z-axis (blue) - pointing upwards
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(centerX, centerY - 140 * scale);
+            ctx.lineTo(centerX, centerY + 140 * scale);
+            ctx.strokeStyle = 'blue';
+            ctx.stroke();
+
+            // Labels
+            ctx.font = `${10 * scale}px Arial`;
+            ctx.fillStyle = 'red';
+            ctx.fillText('+X', centerX + 125 * scale, centerY - 75 * scale);
+            ctx.fillStyle = 'green';
+            ctx.fillText('+Y', centerX + 125 * scale, centerY + 55 * scale);
+            ctx.fillStyle = 'blue';
+            ctx.fillText('+Z', centerX + 5 * scale, centerY - 125 * scale);
+        }
+
+        function drawVector3D(x, y, z, color) {
+            // Modified isometric projection
+            const projX = x + y;
+            const projY = -(x - y) / 2 - z;
+
+            const endX = centerX + projX * scale;
+            const endY = centerY + projY * scale;
+            
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(endX, endY);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(endX, endY, 5 * scale, 0, 2 * Math.PI);
+            ctx.fillStyle = color;
+            ctx.fill();
+        }
+
+        function calculateUnitVector(x, y, z) {
+            const magnitude = Math.sqrt(x * x + y * y + z * z);
+            return {
+                x: x / magnitude,
+                y: y / magnitude,
+                z: z / magnitude
+            };
+        }
+
+        function calculateAndDraw() {
+            const forces = [
+                { 
+                    intensity: parseFloat(document.getElementById('f1').value),
+                    unitVector: calculateUnitVector(
+                        parseFloat(document.getElementById('x1').value),
+                        parseFloat(document.getElementById('y1').value),
+                        parseFloat(document.getElementById('z1').value)
+                    )
+                },
+                { 
+                    intensity: parseFloat(document.getElementById('f2').value),
+                    unitVector: calculateUnitVector(
+                        parseFloat(document.getElementById('x2').value),
+                        parseFloat(document.getElementById('y2').value),
+                        parseFloat(document.getElementById('z2').value)
+                    )
+                },
+                { 
+                    intensity: parseFloat(document.getElementById('f3').value),
+                    unitVector: calculateUnitVector(
+                        parseFloat(document.getElementById('x3').value),
+                        parseFloat(document.getElementById('y3').value),
+                        parseFloat(document.getElementById('z3').value)
+                    )
+                }
+            ];
+
+            let totalX = 0;
+            let totalY = 0;
+            let totalZ = 0;
+            const colors = ['red', 'green', 'blue'];
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawAxis();
+
+            let resultHTML = '<h2>Resultados:</h2>';
+
+            forces.forEach((force, index) => {
+                const fx = force.intensity * force.unitVector.x;
+                const fy = force.intensity * force.unitVector.y;
+                const fz = force.intensity * force.unitVector.z;
+
+                totalX += fx;
+                totalY += fy;
+                totalZ += fz;
+
+                drawVector3D(fx, fy, fz, colors[index]);
+
+                resultHTML += `
+                    <p>Força ${index + 1}:<br>
+                    Intensidade = ${force.intensity.toFixed(2)}<br>
+                    Vetor unitário: (${force.unitVector.x.toFixed(2)}, ${force.unitVector.y.toFixed(2)}, ${force.unitVector.z.toFixed(2)})<br>
+                    Fx = ${fx.toFixed(2)}<br>
+                    Fy = ${fy.toFixed(2)}<br>
+                    Fz = ${fz.toFixed(2)}</p>
+                `;
+            });
+
+            const resultantForce = Math.sqrt(totalX * totalX + totalY * totalY + totalZ * totalZ);
+            const resultantTheta = Math.acos(totalZ / resultantForce) * 180 / Math.PI;
+            const resultantPhi = Math.atan2(totalY, totalX) * 180 / Math.PI;
+
+            drawVector3D(totalX, totalY, totalZ, 'black');
+
+            resultHTML += `
+                <p>Força Resultante Total:<br>
+                Intensidade = ${resultantForce.toFixed(2)}<br>
+                Theta = ${resultantTheta.toFixed(2)}°<br>
+                Phi = ${resultantPhi.toFixed(2)}°<br>
+                Fx = ${totalX.toFixed(2)}<br>
+                Fy = ${totalY.toFixed(2)}<br>
+                Fz = ${totalZ.toFixed(2)}</p>
+            `;
+
+            document.getElementById('resultContainer').innerHTML = resultHTML;
+        }
+
+        // Initial draw
+        calculateAndDraw();
+    </script>
+</body>
+</html>

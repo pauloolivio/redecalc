@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" media="all" href="../assets/application-b0b91461d093aa2ed95d8a7467856e4dc16f55744d3c17a927c3598e5b26cd3f.css" data-turbolinks-track="true" />
+    <title>Lista de Itens</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: #2C3E50;
+        }
+        h1 {
+            font-family: inherit;
+            font-weight: bold;
+            text-align: center;
+            color: #2C3E50;
+        }
+        .container {
+            max-width: 1000px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .titulo {
+            margin-top: 15px;
+            margin-bottom: 15px;
+            padding: 15px;
+            border: 2px solid #dddddd;
+            border-radius: 5px;
+            background-color: #e2e2e2;
+        }
+        .item {
+            margin-bottom: 15px;
+            padding: 15px;
+            border: 2px solid #dddddd;
+            border-radius: 5px;
+        }
+        .item h2 {
+            margin: 0;
+            font-size: 1.5em;
+            color: #000000;
+
+        }
+        .item h2 a {
+            text-decoration: none;
+            color: #2C3E50;
+            font-weight: bold;
+
+        }
+        .item h2 a:hover {
+            text-decoration: underline;
+        }
+        .item p {
+            margin: 5px 0;
+            color: #555;
+        }
+        @media (max-width: 600px) {
+            .item h2 {
+                font-size: 1.2em;
+            }
+            h1 {
+                font-size: 1.5em; /* Tamanho reduzido para smartphones */
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="user-app"></div>
+    <a class="btn btn-default btn-sm" href="/index.html">
+        <i class="glyphicon glyphicon glyphicon-home"></i> Página Principal
+    </a>
+    <div class="titulo">
+    <h1>Programas para Separação de Equipes</h1>
+    </div>
+    
+    <div class="item">
+        <h2><a href="/separadores_equipe/Separador_Equipes.html">1. Separar alunos por pontuação</a></h2>
+        <p>Este programa serve para separar as equipes com base na pontuação de cada alunos a partir de um arquivo "csv".</p>
+    </div>
+    
+    <div class="item">
+        <h2><a href="/separadores_equipe/Separador_Varias_Equipes.html">2. Separar aluno em equipes</a></h2>
+        <p>Este programa serve para separar as equipes de maneira aleatória, com o tamanho da equipe informada pelo docente a partir de um arquivo "csv".</p>
+    </div>
+    
+    <div class="item">
+        <h2><a href="/separadores_equipe/Separador_Roleta_da_Sorte.html">3. Roleta da Sorte</a></h2>
+        <p>Esse programa roda a rolata para selecionar o aluno participante da atividade.</p>
+    </div>
+   
+
+</div>
+
+</body>
+</html>

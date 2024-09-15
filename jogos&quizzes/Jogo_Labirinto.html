@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Labirinto da Soldagem</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+            touch-action: none;
+        }
+        h1 {
+            text-align: center;
+            color: black;
+        }
+        #game-container {
+            display: flex;
+            position: relative;
+            width: 100vw;
+            height: 100vw;
+            max-width: 800px;
+            max-height: 840px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        #game-canvas {
+            border: 2px solid #333;
+        }
+        #question-modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+        }
+        button {
+            margin: 10px;
+            padding: 5px 10px;
+        }
+        #game-info {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 800px;
+            margin-top: 10px;
+        }
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .checkbox-container input {
+            margin-right: 10px;
+        }
+        #controls {
+            display: none;
+            justify-content: center;
+            flex-wrap: wrap;
+            width: 100%;
+            max-width: 300px;
+            margin-top: 20px;
+        }
+        .control-button {
+            width: 80px;
+            height: 80px;
+            margin: 5px;
+            font-size: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #ddd;
+            border: none;
+            border-radius: 10px;
+            touch-action: manipulation;
+        }
+    </style>
+</head>
+<body>
+    <h1>Labirinto da Soldagem</h1>
+    <div id="game-info">
+        <div id="timer">Tempo: 0s</div>
+        <div id="lives">Vidas: 3</div>
+        <div id="score">Pontuação: 0</div>
+    </div>
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+    </div>
+    <div id="controls">
+        <button class="control-button" id="up">↑</button>
+        <button class="control-button" id="left">←</button>
+        <button class="control-button" id="right">→</button>
+        <button class="control-button" id="down">↓</button>
+    </div>
+
+    <div>Código da sessão: <span id="session-code"></span></div>
+    <button id="restart" class="button">Reiniciar</button>
+    <button id="print-button" class="button" disabled>Imprimir</button>
+
+    <div id="question-modal">
+        <div class="modal-content">
+            <h2 id="question"></h2>
+            <div id="answers"></div>
+            <button id="submit-answer">Enviar Resposta</button>
+        </div>
+    </div>
+
+    <script>
+        const printButton = document.getElementById('print-button');
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        const questionModal = document.getElementById('question-modal');
+        const questionElement = document.getElementById('question');
+        const answersElement = document.getElementById('answers');
+        const submitAnswerButton = document.getElementById('submit-answer');
+        const timerElement = document.getElementById('timer');
+        const livesElement = document.getElementById('lives');
+        const scoreElement = document.getElementById('score');
+        const restartButton = document.getElementById('restart');
+
+        let playerX, playerY;
+        let currentDoor = null;
+        let gameStartTime;
+        let timerInterval;
+        let lives = 3;
+        let score = 0;
+        let answeredQuestions = new Set();
+        let canMove = true;
+        let movementInterval;
+        let currentDirection = null;
+
+        const cellSize = 30;
+        const playerSize = 20;
+        const doorSize = 30;
+
+        const maze = [
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1],
+            [1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1],
+            [1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1],
+            [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1],
+            [1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1],
+            [1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1],
+            [1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        ];
+
+        const questions = [
+            {
+                question: "Quais são os desafios ao soldar o aço AISI 440?",
+                answers: [
+                    "Pode fraturar devido à formação martensítica",
+                    "É uma tarefa fácil",
+                    "Requer pré-aquecimento",
+                    "Não apresenta desafios significativos"
+                ],
+                correct: [0, 2]
+            },
+            {
+                question: "Quais materiais são adequados para soldar com AISI 440?",
+                answers: [
+                    "AISI 420",
+                    "Consumível austenítico compatível",
+                    "Qualquer aço inoxidável",
+                    "Apenas o próprio AISI 440"
+                ],
+                correct: [1]
+            },
+            {
+                question: "Quais processos de soldagem são recomendados para AISI 440?",
+                answers: [
+                    "TIG (GTAW)",
+                    "MIG (GMAW)",
+                    "Eletrodo revestido (SMAW)",
+                    "Solda por resistência"
+                ],
+                correct: [0, 2]
+            },
+            {
+                question: "Quais precauções devem ser tomadas ao soldar AISI 440?",
+                answers: [
+                    "Realizar pré-aquecimento",
+                    "Usar eletrodo exposto à umidade",
+                    "Evitar tratamentos pós-soldagem",
+                    "Controlar a taxa de resfriamento"
+                ],
+                correct: [0, 3]
+            },
+            {
+                question: "Quais afirmações são verdadeiras sobre a soldagem de AISI 440?",
+                answers: [
+                    "A peça reparada terá a mesma qualidade que a original",
+                    "A solda é um procedimento provisório",
+                    "Não há risco de fragilização",
+                    "Pode haver precipitação de fases frágeis durante o revenido"
+                ],
+                correct: [1, 3]
+            }
+        ];
+
+        const doors = [
+            {x: 3, y: 3, question: 0},
+            {x: 4, y: 7, question: 1},
+            {x: 10, y: 9, question: 2},
+            {x: 7, y: 15, question: 3},
+            {x: 18, y: 10, question: 4}
+        ];
+        
+        // Posição inicial do jogador
+        function initGame() {
+            canvas.width = cellSize * maze[0].length;
+            canvas.height = cellSize * maze.length;
+            playerX = cellSize * 1.5;
+            playerY = cellSize * 1.5;
+            drawMaze();
+            drawPlayer();
+        }
+
+        function drawMaze() {
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            for (let y = 0; y < maze.length; y++) {
+                for (let x = 0; x < maze[y].length; x++) {
+                    if (maze[y][x] === 1) {
+                        ctx.fillStyle = '#333';
+                        ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+                    } else if (maze[y][x] === 2) {
+                        ctx.fillStyle = 'gold';
+                        ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+                        ctx.fillStyle = '#000';
+                        ctx.font = '22px Arial';
+                        ctx.fillText('$', x * cellSize + 10, y * cellSize + 22);
+                    }
+                }
+            }
+
+            doors.forEach((door, index) => {
+                if (!answeredQuestions.has(index)) {
+                    ctx.fillStyle = 'brown';
+                    ctx.fillRect(door.x * cellSize, door.y * cellSize, doorSize, doorSize);
+                    ctx.fillStyle = '#fff';
+                    ctx.font = '16px Arial';
+                    ctx.fillText(index + 1, door.x * cellSize + 10, door.y * cellSize + 20);
+                }
+            });
+        }
+
+        function drawPlayer() {
+            ctx.fillStyle = 'red';
+            ctx.beginPath();
+            ctx.arc(playerX, playerY, playerSize / 1.5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function movePlayer(direction) {
+            if (!canMove) return;
+
+            clearInterval(movementInterval);
+            movementInterval = setInterval(() => {
+                const step = 2;
+                let newX = playerX;
+                let newY = playerY;
+
+                switch(direction) {
+                    case 'ArrowUp': newY -= step; break;
+                    case 'ArrowDown': newY += step; break;
+                    case 'ArrowLeft': newX -= step; break;
+                    case 'ArrowRight': newX += step; break;
+                }
+
+                if (!checkWallCollision(newX, newY)) {
+                    playerX = newX;
+                    playerY = newY;
+                    drawMaze();
+                    drawPlayer();
+                    checkDoorCollision();
+                    checkGoal();
+                }
+            }, 20);
+        }
+
+        function stopMovement() {
+            clearInterval(movementInterval);
+        }
+
+        function checkWallCollision(x, y) {
+            const cellX = Math.floor(x / cellSize);
+            const cellY = Math.floor(y / cellSize);
+            return maze[cellY][cellX] === 1;
+        }
+
+        function checkDoorCollision() {
+            doors.forEach((door, index) => {
+                const doorRect = {
+                    x: door.x * cellSize,
+                    y: door.y * cellSize,
+                    width: doorSize,
+                    height: doorSize
+                };
+                const playerRect = {
+                    x: playerX - playerSize / 2,
+                    y: playerY - playerSize / 2,
+                    width: playerSize,
+                    height: playerSize
+                };
+                if (isColliding(doorRect, playerRect) && !answeredQuestions.has(index)) {
+                    currentDoor = index;
+                    showQuestion(door.question);
+                    canMove = false;
+                    stopMovement();
+                }
+            });
+        }
+
+        function isColliding(rect1, rect2) {
+            return rect1.x < rect2.x + rect2.width &&
+                   rect1.x + rect1.width > rect2.x &&
+                   rect1.y < rect2.y + rect2.height &&
+                   rect1.y + rect1.height > rect2.y;
+        }
+
+        function showQuestion(questionIndex) {
+            const question = questions[questionIndex];
+            questionElement.textContent = question.question;
+            answersElement.innerHTML = '';
+            question.answers.forEach((answer, index) => {
+                const container = document.createElement('div');
+                container.className = 'checkbox-container';
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = `answer-${index}`;
+                checkbox.value = index;
+                const label = document.createElement('label');
+                label.htmlFor = `answer-${index}`;
+                label.textContent = answer;
+                container.appendChild(checkbox);
+                container.appendChild(label);
+                answersElement.appendChild(container);
+            });
+            questionModal.style.display = 'block';
+            submitAnswerButton.onclick = () => checkAnswer(questionIndex);
+        }
+
+        function checkAnswer(questionIndex) {
+            const selectedAnswers = Array.from(document.querySelectorAll('input[type="checkbox"]:checked')).map(cb => parseInt(cb.value));
+            const correctAnswers = questions[questionIndex].correct;
+            
+            if (arraysEqual(selectedAnswers, correctAnswers)) {
+                questionModal.style.display = 'none';
+                answeredQuestions.add(currentDoor);
+                score += 100;
+                updateScore();
+                canMove = true;
+                drawMaze();
+                drawPlayer();
+            } else {
+                alert('Resposta incorreta! Você perdeu uma vida.');
+                lives--;
+                updateLives();
+                if (lives <= 0) {
+                    endGame(false);
+                } else {
+                    resetPlayerPosition();
+                }
+            }
+        }
+
+        function arraysEqual(arr1, arr2) {
+            if (arr1.length !== arr2.length) return false;
+            const sorted1 = arr1.sort();
+            const sorted2 = arr2.sort();
+            return sorted1.every((value, index) => value === sorted2[index]);
+        }
+
+        function resetPlayerPosition() {
+            playerX = cellSize * 1.5;
+            playerY = cellSize * 1.5;
+            questionModal.style.display = 'none';
+            canMove = true;
+            stopMovement();
+            drawMaze();
+            drawPlayer();
+        }
+
+        function checkGoal() {
+            const goalX = maze[0].length - 2;
+            const goalY = maze.length - 2;
+            const playerCellX = Math.floor(playerX / cellSize);
+            const playerCellY = Math.floor(playerY / cellSize);
+
+            if (playerCellX === goalX && playerCellY === goalY) {
+                endGame(true);
+            }
+        }
+
+        function startTimer() {
+            gameStartTime = Date.now();
+            timerInterval = setInterval(() => {
+                const timeElapsed = Math.floor((Date.now() - gameStartTime) / 1000);
+                timerElement.textContent = `Tempo: ${timeElapsed}s`;
+            }, 1000);
+        }
+
+        function updateLives() {
+            livesElement.textContent = `Vidas: ${lives}`;
+        }
+
+        function updateScore() {
+            scoreElement.textContent = `Pontuação: ${score}`;
+        }
+
+        function endGame(win) {
+            clearInterval(timerInterval);
+            stopMovement();
+            const timeElapsed = Math.floor((Date.now() - gameStartTime) / 1000);
+            if (win) {
+                alert(`Parabéns! Você completou o labirinto em ${timeElapsed} segundos com ${score} pontos!`);
+            } else {
+                alert(`Fim de jogo! Você perdeu todas as vidas. Pontuação final: ${score}`);
+            }
+            restartGame();
+        }
+
+        function restartGame() {
+            resetPlayerPosition();
+            clearInterval(timerInterval);
+            lives = 3;
+            score = 0;
+            answeredQuestions.clear();
+            updateLives();
+            updateScore();
+            startTimer();
+            drawMaze();
+            drawPlayer();
+        }
+
+        function handleKeyDown(e) {
+            movePlayer(e.key);
+        }
+
+        function handleKeyUp(e) {
+            if (e.key === currentDirection) {
+                stopMovement();
+            }
+        }
+
+        function handleTouchStart(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const button = document.elementFromPoint(touch.clientX, touch.clientY);
+            if (button && button.classList.contains('control-button')) {
+                movePlayer(button.id === 'up' ? 'ArrowUp' : button.id === 'down' ? 'ArrowDown' : button.id === 'left' ? 'ArrowLeft' : 'ArrowRight');
+            }
+        }
+
+        function handleTouchEnd(e) {
+            stopMovement();
+        }
+
+        function showMobileControls() {
+            const controls = document.getElementById('controls');
+            if (window.innerWidth <= 768) {
+                controls.style.display = 'flex';
+                document.removeEventListener('keydown', handleKeyDown);
+                document.removeEventListener('keyup', handleKeyUp);
+                controls.addEventListener('touchstart', handleTouchStart, {passive: false});
+                controls.addEventListener('touchend', handleTouchEnd);
+            } else {
+                controls.style.display = 'none';
+                document.addEventListener('keydown', handleKeyDown);
+                document.addEventListener('keyup', handleKeyUp);
+                controls.removeEventListener('touchstart', handleTouchStart);
+                controls.removeEventListener('touchend', handleTouchEnd);
+            }
+        }
+
+        initGame();
+        restartButton.addEventListener('click', restartGame);
+        startTimer();
+        updateLives();
+        updateScore();
+
+        window.addEventListener('resize', showMobileControls);
+        showMobileControls();
+    </script>
+</body>
+</html>

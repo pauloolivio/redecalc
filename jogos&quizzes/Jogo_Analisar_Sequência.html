@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo de Sequência de Soldagem</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        #game-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            width: 100%;
+            max-width: 1200px;
+        }
+        #drop-container {
+            background-color: #fff;
+            border: 2px dashed #aaa;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            flex: 1;
+            min-width: 300px;
+            min-height: 300px;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        #drop-container.drag-over {
+            background-color: #e0e0e0;
+            border-color: #4CAF50;
+        }
+        #drag-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex: 1;
+            min-width: 300px;
+        }
+        .drag-item {
+            background-color: #e0e0e0;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: move;
+            user-select: none;
+        }
+        #controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            margin-top: 20px;
+        }
+        #check-btn, #reset-btn {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        #reset-btn {
+            background-color: #f44336;
+        }
+        #message {
+            font-weight: bold;
+            margin-top: 10px;
+            text-align: center;
+        }
+        #score-container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Jogo de Sequência de Soldagem</h1>
+    <div id="score-container">
+        <div>Pontuação: <span id="score">0</span></div>
+        <div>Tempo: <span id="timer">0</span>s</div>
+    </div>
+    <div id="game-container">
+        <div id="drag-container">
+            <div class="drag-item" draggable="true">6. Avaliar o resultado e tomar medidas corretivas, se necessário</div>
+            <div class="drag-item" draggable="true">2. Calcular o cromo e níquel equivalentes</div>
+            <div class="drag-item" draggable="true">4. Determinar a composição do metal de solda</div>
+            <div class="drag-item" draggable="true">1. Obter a composição química do metal base</div>
+            <div class="drag-item" draggable="true">5. Prever a microestrutura resultante</div>
+            <div class="drag-item" draggable="true">3. Localizar o ponto no diagrama de Schaeffler</div>
+        </div>
+        <div id="drop-container"></div>
+    </div>
+    <div id="controls">
+        <button id="check-btn">Verificar Sequência</button>
+        <button id="reset-btn">Reiniciar</button>
+        <div id="message"></div>
+    </div>
+
+    <script>
+        const dragItems = document.querySelectorAll('.drag-item');
+        const dragContainer = document.getElementById('drag-container');
+        const dropContainer = document.getElementById('drop-container');
+        const checkBtn = document.getElementById('check-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const message = document.getElementById('message');
+        const scoreElement = document.getElementById('score');
+        const timerElement = document.getElementById('timer');
+
+        let score = 0;
+        let startTime;
+        let timerInterval;
+
+        function startTimer() {
+            startTime = Date.now();
+            timerInterval = setInterval(() => {
+                const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+                timerElement.textContent = elapsedTime;
+            }, 1000);
+        }
+
+        function resetGame() {
+            clearInterval(timerInterval);
+            timerElement.textContent = '0';
+            score = 0;
+            scoreElement.textContent = score;
+            message.textContent = "";
+            checkBtn.disabled = false;
+            startTimer();
+
+            dropContainer.innerHTML = '';
+            const shuffledItems = Array.from(dragItems).sort(() => Math.random() - 0.5);
+            shuffledItems.forEach(item => dragContainer.appendChild(item));
+        }
+
+        dragItems.forEach(item => {
+            item.addEventListener('dragstart', dragStart);
+            item.addEventListener('dragend', dragEnd);
+        });
+
+        dropContainer.addEventListener('dragover', dragOver);
+        dropContainer.addEventListener('dragenter', dragEnter);
+        dropContainer.addEventListener('dragleave', dragLeave);
+        dropContainer.addEventListener('drop', drop);
+
+        function dragStart(e) {
+            e.dataTransfer.setData('text/plain', e.target.innerHTML);
+            setTimeout(() => {
+                e.target.classList.add('hide');
+            }, 0);
+        }
+
+        function dragEnd(e) {
+            e.target.classList.remove('hide');
+        }
+
+        function dragOver(e) {
+            e.preventDefault();
+        }
+
+        function dragEnter(e) {
+            e.preventDefault();
+            dropContainer.classList.add('drag-over');
+        }
+
+        function dragLeave(e) {
+            dropContainer.classList.remove('drag-over');
+        }
+
+        function drop(e) {
+            e.preventDefault();
+            dropContainer.classList.remove('drag-over');
+            const data = e.dataTransfer.getData('text');
+            const draggedItem = document.createElement('div');
+            draggedItem.classList.add('drag-item');
+            draggedItem.innerHTML = data;
+            draggedItem.draggable = true;
+            draggedItem.addEventListener('dragstart', dragStart);
+            draggedItem.addEventListener('dragend', dragEnd);
+            dropContainer.appendChild(draggedItem);
+            
+            // Remove o item original do drag-container
+            Array.from(dragContainer.children).forEach(child => {
+                if (child.innerHTML === data) {
+                    dragContainer.removeChild(child);
+                }
+            });
+        }
+
+        checkBtn.addEventListener('click', checkSequence);
+        resetBtn.addEventListener('click', resetGame);
+
+        function checkSequence() {
+            const currentOrder = Array.from(dropContainer.children).map(item => item.textContent.split('.')[0]);
+            const correctOrder = ['1', '2', '3', '4', '5', '6'];
+            
+            if (JSON.stringify(currentOrder) === JSON.stringify(correctOrder)) {
+                score += 10;
+                scoreElement.textContent = score;
+                message.textContent = "Parabéns! Você acertou a sequência!";
+                checkBtn.disabled = true;
+                clearInterval(timerInterval);
+            } else {
+                message.textContent = "Sequência incorreta. Tente novamente!";
+            }
+        }
+
+        resetGame();
+    </script>
+</body>
+</html>

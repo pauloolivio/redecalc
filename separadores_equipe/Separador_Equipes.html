@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Separar duas equipes</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        input, button {
+            margin: 10px 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        #printView {
+            display: none;
+        }
+        @media print {
+            #mainView { display: none; }
+            #printView { display: block; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="mainView">
+        <h1>Separar duas equipes</h1>
+        <input type="file" id="csvFile" accept=".csv">
+        <button onclick="processFile()">Processar Arquivo</button>
+        <button onclick="printTeams()">Imprimir Equipes</button>
+        <div id="output"></div>
+    </div>
+    
+    <div id="printView"></div>
+
+    <script>
+        let students = [];
+        let teamsHighLow = [];
+        let teamsMixed = [];
+
+        function processFile() {
+            const file = document.getElementById('csvFile').files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                const content = e.target.result;
+                const lines = content.split('\n');
+                students = lines.map(line => {
+                    const [name, score] = line.split(',');
+                    return { name: name.trim(), score: parseFloat(score) };
+                }).filter(student => !isNaN(student.score));
+
+                displayResults();
+            };
+
+            reader.readAsText(file);
+        }
+
+        function displayResults() {
+            const output = document.getElementById('output');
+            output.innerHTML = '';
+
+            const sortedByScore = [...students].sort((a, b) => b.score - a.score);
+            teamsHighLow = createTeamsHighLow(sortedByScore);
+            teamsMixed = createBalancedTeams(students);
+
+            output.innerHTML += '<h2>Equipes A e B - Lideres x Desafiantes</h2>';
+            displayTeams(teamsHighLow, output);
+
+            output.innerHTML += '<h2>Equipes A e B - Sujos x Mal lavados</h2>';
+            displayTeams(teamsMixed, output);
+        }
+
+        function createTeamsHighLow(students) {
+            const middleIndex = Math.ceil(students.length / 2);
+            const teamA = students.slice(0, middleIndex);
+            const teamB = students.slice(middleIndex);
+            return [teamA, teamB];
+        }
+
+        function createBalancedTeams(students) {
+            const sortedStudents = [...students].sort((a, b) => b.score - a.score);
+            const teamA = [];
+            const teamB = [];
+            let sumA = 0;
+            let sumB = 0;
+
+            sortedStudents.forEach(student => {
+                if (sumA <= sumB) {
+                    teamA.push(student);
+                    sumA += student.score;
+                } else {
+                    teamB.push(student);
+                    sumB += student.score;
+                }
+            });
+
+            return [teamA, teamB];
+        }
+
+        function displayTeams(teams, container) {
+            const teamNames = ['Equipe A', 'Equipe B'];
+            teams.forEach((team, index) => {
+                const table = document.createElement('table');
+                table.innerHTML = `
+                    <tr>
+                        <th colspan="2">${teamNames[index]}</th>
+                    </tr>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Pontuação</th>
+                    </tr>
+                    ${team.map(student => `
+                        <tr>
+                            <td>${student.name}</td>
+                            <td>${student.score}</td>
+                        </tr>
+                    `).join('')}
+                    <tr>
+                        <th>Média</th>
+                        <td>${(team.reduce((sum, student) => sum + student.score, 0) / team.length).toFixed(2)}</td>
+                    </tr>
+                `;
+                container.appendChild(table);
+            });
+        }
+
+        function printTeams() {
+            const printView = document.getElementById('printView');
+            printView.innerHTML = '';
+
+            printView.innerHTML += '<h2>Equipes A e B - Lideres x Desafiantes</h2>';
+            displayPrintTeams(teamsHighLow, printView);
+
+            printView.innerHTML += '<h2>Equipes A e B - Sujos x Mal lavados</h2>';
+            displayPrintTeams(teamsMixed, printView);
+
+            window.print();
+        }
+
+        function displayPrintTeams(teams, container) {
+            const teamNames = ['Equipe A', 'Equipe B'];
+            teams.forEach((team, index) => {
+                const table = document.createElement('table');
+                table.innerHTML = `
+                    <tr>
+                        <th>${teamNames[index]}</th>
+                    </tr>
+                    ${team.map(student => `
+                        <tr>
+                            <td>${student.name}</td>
+                        </tr>
+                    `).join('')}
+                `;
+                container.appendChild(table);
+            });
+        }
+    </script>
+</body>
+</html>

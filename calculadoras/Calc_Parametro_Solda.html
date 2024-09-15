@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soldagem Programável</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            background-color: #333;
+            color: white;
+            padding: 10px;
+            text-align: center;
+        }
+        .controls {
+            background-color: #ddd;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+        .simulation {
+            background-color: #333;
+            height: 300px;
+            position: relative;
+            overflow: hidden;
+        }
+        .weld-point {
+            width: 20px;
+            height: 20px;
+            background-color: #0f0;
+            position: absolute;
+            left: 0;
+            top: 140px;
+            z-index: 2;
+        }
+        .weld-line {
+            height: 15px;
+            background-color: #ff0;
+            position: absolute;
+            top: 143px;
+            z-index: 1;
+        }
+        .plate-gap {
+            width: 100%;
+            height: 2px;
+            background-color: white;
+            position: absolute;
+            top: 149px;
+            z-index: 0;
+        }
+        .panel {
+            background-color: #ccc;
+            padding: 10px;
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .parameter {
+            margin-bottom: 10px;
+        }
+        select, input {
+            width: 100%;
+            padding: 5px;
+            margin-top: 5px;
+            box-sizing: border-box;
+        }
+        #message {
+            color: red;
+            margin-top: 10px;
+            grid-column: 1 / -1;
+            text-align: center;
+        }
+        @media (max-width: 1024px) {
+            .controls {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (max-width: 768px) {
+            .controls {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Soldagem Programável</h1>
+    </header>
+    <div class="container">
+        <div class="controls">
+            <div class="parameter">
+                <label for="weld-type">Definir tipo de solda:</label>
+                <select id="weld-type">
+                    <option value="MIG">MIG</option>
+                    <option value="TIG">TIG</option>
+                    <option value="Eletrodo">Eletrodo</option>
+                </select>
+            </div>
+            <div class="parameter">
+                <label for="voltage">Definir tensão (V):</label>
+                <input type="number" id="voltage" value="22" min="0" max="100">
+            </div>
+            <div class="parameter">
+                <label for="current">Definir corrente (A):</label>
+                <input type="number" id="current" value="150" min="0" max="300">
+            </div>
+            <div class="parameter">
+                <label for="wire-speed">Definir velocidade do arame (m/min):</label>
+                <input type="number" id="wire-speed" value="5" min="0" max="20">
+            </div>
+            <div class="parameter">
+                <label for="movement">Mover robô X (mm):</label>
+                <input type="number" id="movement" value="300" min="0" max="500">
+            </div>
+            <div class="parameter">
+                <label for="weld-size">Tamanho da solda (mm):</label>
+                <input type="number" id="weld-size" value="50" min="10" max="100">
+            </div>
+            <div class="parameter">
+                <label for="gap-size">Tamanho do vão sem solda (mm):</label>
+                <input type="number" id="gap-size" value="20" min="5" max="50">
+            </div>
+            <div id="message"></div>
+        </div>
+        <div class="simulation">
+            <div class="plate-gap"></div>
+            <div class="weld-point" id="weld-point"></div>
+        </div>
+        <div class="panel">
+            <button onclick="startWelding()">Iniciar soldagem</button>
+            <button onclick="stopWelding()">Parar soldagem</button>
+            <button onclick="executeWelding()">Executar Soldagem</button>
+            <button onclick="reset()">Reiniciar</button>
+        </div>
+    </div>
+
+    <script>
+        let isWelding = false;
+        let weldPoint = document.getElementById('weld-point');
+        let position = 0;
+        let weldLines = [];
+        let isWeldingSegment = true;
+
+        function startWelding() {
+            if (validateParameters()) {
+                isWelding = true;
+                animateWelding();
+            }
+        }
+
+        function stopWelding() {
+            isWelding = false;
+        }
+
+        function animateWelding() {
+            if (isWelding && position < parseInt(document.getElementById('movement').value)) {
+                let weldSize = parseInt(document.getElementById('weld-size').value);
+                let gapSize = parseInt(document.getElementById('gap-size').value);
+                let segmentSize = isWeldingSegment ? weldSize : gapSize;
+
+                if (position % (weldSize + gapSize) === 0) {
+                    isWeldingSegment = !isWeldingSegment;
+                    if (isWeldingSegment) {
+                        startNewWeldLine();
+                    }
+                }
+
+                position += 2;
+                weldPoint.style.left = position + 'px';
+
+                if (isWeldingSegment) {
+                    updateWeldLine();
+                }
+
+                requestAnimationFrame(animateWelding);
+            } else if (isWelding) {
+                stopWelding();
+            }
+        }
+
+        function startNewWeldLine() {
+            let newLine = document.createElement('div');
+            newLine.className = 'weld-line';
+            newLine.style.left = position + 'px';
+            document.querySelector('.simulation').appendChild(newLine);
+            weldLines.push(newLine);
+        }
+
+        function updateWeldLine() {
+            if (weldLines.length > 0) {
+                let currentLine = weldLines[weldLines.length - 1];
+                currentLine.style.width = (position - parseInt(currentLine.style.left)) + 'px';
+            }
+        }
+
+        function executeWelding() {
+            startWelding();
+            setTimeout(stopWelding, 5000);
+        }
+
+        function reset() {
+            stopWelding();
+            position = 0;
+            isWeldingSegment = true;
+            weldPoint.style.left = '0px';
+            weldLines.forEach(line => line.remove());
+            weldLines = [];
+            document.getElementById('message').textContent = '';
+        }
+
+        function validateParameters() {
+            let weldType = document.getElementById('weld-type').value;
+            let voltage = parseInt(document.getElementById('voltage').value);
+            let current = parseInt(document.getElementById('current').value);
+            let wireSpeed = parseInt(document.getElementById('wire-speed').value);
+            let message = document.getElementById('message');
+
+            let isValid = true;
+            let errorMessage = '';
+
+            switch (weldType) {
+                case 'MIG':
+                    if (voltage < 15 || voltage > 30) {
+                        errorMessage += 'Tensão ideal para MIG: 15-30V. ';
+                        isValid = false;
+                    }
+                    if (current < 50 || current > 250) {
+                        errorMessage += 'Corrente ideal para MIG: 50-250A. ';
+                        isValid = false;
+                    }
+                    if (wireSpeed < 2 || wireSpeed > 15) {
+                        errorMessage += 'Velocidade do arame ideal para MIG: 2-15 m/min. ';
+                        isValid = false;
+                    }
+                    break;
+                case 'TIG':
+                    if (voltage < 10 || voltage > 20) {
+                        errorMessage += 'Tensão ideal para TIG: 10-20V. ';
+                        isValid = false;
+                    }
+                    if (current < 5 || current > 200) {
+                        errorMessage += 'Corrente ideal para TIG: 5-200A. ';
+                        isValid = false;
+                    }
+                    break;
+                case 'Eletrodo':
+                    if (voltage < 20 || voltage > 40) {
+                        errorMessage += 'Tensão ideal para Eletrodo: 20-40V. ';
+                        isValid = false;
+                    }
+                    if (current < 40 || current > 300) {
+                        errorMessage += 'Corrente ideal para Eletrodo: 40-300A. ';
+                        isValid = false;
+                    }
+                    break;
+            }
+
+            if (!isValid) {
+                message.textContent = 'Parâmetros fora do ideal: ' + errorMessage;
+            } else {
+                message.textContent = '';
+            }
+
+            return isValid;
+        }
+    </script>
+</body>
+</html>

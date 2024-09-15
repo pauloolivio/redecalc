@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Roleta da Sorte</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f0f0f0;
+      font-family: Arial, sans-serif;
+    }
+
+    h1 {
+      font-size: 32px;
+      margin-bottom: 10px;
+    }
+
+    h2 {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+
+    .wheel-container {
+      position: relative;
+    }
+
+    canvas {
+      border: 2px solid #333;
+      border-radius: 50%;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .arrow {
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 20px solid transparent;
+      border-right: 20px solid transparent;
+      border-top: 40px solid #ff0000;
+    }
+
+    #student-name {
+      margin-top: 20px;
+      font-size: 24px;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>Roleta da Sorte</h1>
+ 
+  <div class="wheel-container">
+    <canvas id="spin-wheel" width="400" height="400"></canvas>
+    <div class="arrow"></div>
+  </div>
+  <div id="student-name"></div>
+  <button id="spin-button">Girar a Roleta</button>
+
+  <script>
+    const canvas = document.getElementById('spin-wheel');
+    const ctx = canvas.getContext('2d');
+    const studentNames = [
+    'Miguel', 'Paulo', 'Julliana', 'Cleverson', 'Michelle', 'Camila','João', 'Alexandre', 'José Augusto'
+    ];
+
+    const anglePerStudent = (2 * Math.PI) / studentNames.length;
+
+    function drawWheel(rotation) {
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const radius = Math.min(centerX, centerY) * 0.8;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.save();
+    ctx.translate(centerX, centerY);
+    ctx.rotate(rotation);
+
+    for (let i = 0; i < studentNames.length; i++) {
+        const startAngle = i * anglePerStudent;
+        const endAngle = (i + 1) * anglePerStudent;
+
+        // Desenhar o segmento
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, radius, startAngle, endAngle);
+        ctx.closePath();
+
+        const color = `hsl(${(i * 360) / studentNames.length}, 70%, 70%)`;
+        ctx.fillStyle = color;
+        ctx.fill();
+
+        // Desenhar o nome
+        ctx.save();
+        ctx.rotate(startAngle + anglePerStudent / 2);
+        ctx.translate(radius * 0.7, 0);
+        ctx.rotate(Math.PI / 90); // Ajuste para que o texto fique na posição correta
+        ctx.fillStyle = '#fff';
+        ctx.font = '16px Arial';
+        ctx.fillText(studentNames[i], -ctx.measureText(studentNames[i]).width / 2, 0);
+        ctx.restore();
+    }
+
+    ctx.restore();
+    }
+
+    let spinning = false;
+    let rotation = 0;
+    let targetRotation = 0;
+    let spinDuration = 5000;
+    let startTime = null;
+    let winningIndex = null;
+
+    function spinWheel() {
+    if (!spinning) {
+        spinning = true;
+        startTime = performance.now();
+        targetRotation = Math.random() * 10 * 2 * Math.PI + 2 * Math.PI;
+        document.getElementById('student-name').textContent = '';
+    }
+    }
+
+    function easeOutCubic(t) {
+    return 1 - Math.pow(1 - t, 3);
+    }
+
+    function animate(currentTime) {
+    requestAnimationFrame(animate);
+
+    if (spinning) {
+        const elapsedTime = currentTime - startTime;
+        const progress = Math.min(elapsedTime / spinDuration, 1);
+        rotation = easeOutCubic(progress) * targetRotation;
+
+        if (progress >= 1) {
+          spinning = false;
+          winningIndex = Math.floor(studentNames.length - (rotation % (2 * Math.PI)) / anglePerStudent) % studentNames.length;
+         // document.getElementById('student-name').textContent = `O vencedor é: ${studentNames[winningIndex]}`;
+        }
+    }
+
+    drawWheel(rotation);
+    }
+
+    drawWheel(0);
+    document.getElementById('spin-button').addEventListener('click', spinWheel);
+    animate(performance.now());
+  </script>
+</body>
+</html>

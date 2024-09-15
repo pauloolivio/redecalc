@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Aporte Térmico</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        #controls, #heatInput {
+            margin-bottom: 20px;
+        }
+        label, input {
+            margin: 5px;
+        }
+        #weldCanvas {
+            border: 1px solid #000;
+        }
+        #heatInput {
+            font-size: 18px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Simulador de Aporte Térmico</h1>
+    <div id="controls">
+        <label for="voltage">Tensão (V):</label>
+        <input type="range" id="voltage" min="10" max="40" value="25" step="1">
+        <span id="voltageValue">25</span>
+
+        <label for="current">Corrente (A):</label>
+        <input type="range" id="current" min="50" max="350" value="200" step="10">
+        <span id="currentValue">200</span>
+
+        <label for="speed">Velocidade (cm/min):</label>
+        <input type="range" id="speed" min="10" max="100" value="50" step="5">
+        <span id="speedValue">50</span>
+
+        <button id="simulate">Simular</button>
+    </div>
+    <div id="heatInput">Aporte Térmico: <span id="heatInputValue">0.00</span> kJ/mm</div>
+    <canvas id="weldCanvas" width="600" height="500"></canvas>
+
+    <script>
+        const voltageInput = document.getElementById('voltage');
+        const currentInput = document.getElementById('current');
+        const speedInput = document.getElementById('speed');
+        const simulateButton = document.getElementById('simulate');
+        const canvas = document.getElementById('weldCanvas');
+        const ctx = canvas.getContext('2d');
+        const heatInputValue = document.getElementById('heatInputValue');
+
+        function updateValue(input, valueSpan) {
+            input.addEventListener('input', () => {
+                valueSpan.textContent = input.value;
+                calculateHeatInput();
+                simulateWeld();
+            });
+        }
+
+        updateValue(voltageInput, document.getElementById('voltageValue'));
+        updateValue(currentInput, document.getElementById('currentValue'));
+        updateValue(speedInput, document.getElementById('speedValue'));
+
+        function calculateHeatInput() {
+            const voltage = parseFloat(voltageInput.value);
+            const current = parseFloat(currentInput.value);
+            const speed = parseFloat(speedInput.value);
+            
+            const efficiency = 0.8;
+            
+            const heatInput = (voltage * current * efficiency) / (speed * 10);
+            
+            heatInputValue.textContent = heatInput.toFixed(2);
+            return heatInput;
+        }
+
+        function simulateWeld() {
+            const voltage = parseFloat(voltageInput.value);
+            const current = parseFloat(currentInput.value);
+            const speed = parseFloat(speedInput.value);
+            const heatInput = calculateHeatInput();
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const speedFactor = 1 - (speed - 10) / 90;
+            const weldWidth = Math.min(60, Math.max(10, (voltage - 10) * 2 * speedFactor));
+            const weldDepth = Math.min(60, Math.max(5, (current - 50) / 5 * speedFactor));
+            const weldHeight = Math.min(15, Math.max(2, (voltage * current) / (speed * 100)));
+
+            // Desenha a vista superior (deslocada 100px para baixo)
+            ctx.fillStyle = '#999';
+            ctx.fillRect(50, 150, 500, 150);
+
+            ctx.fillStyle = '#777';
+            ctx.beginPath();
+            ctx.moveTo(50, 225 - weldWidth / 2);
+            ctx.lineTo(550, 225 - weldWidth / 2);
+            ctx.quadraticCurveTo(550, 225, 550, 225 + weldWidth / 2);
+            ctx.lineTo(50, 225 + weldWidth / 2);
+            ctx.quadraticCurveTo(50, 225, 50, 225 - weldWidth / 2);
+            ctx.fill();
+
+            ctx.strokeStyle = '#666';
+            for (let i = 60; i < 550; i += 10) {
+                ctx.beginPath();
+                ctx.moveTo(i, 225 - weldWidth / 2);
+                ctx.lineTo(i + 5, 225 + weldWidth / 2);
+                ctx.stroke();
+            }
+
+            // Desenha a vista em corte (deslocada 100px para baixo)
+            ctx.fillStyle = '#999';
+            ctx.fillRect(200, 350, 150, 80);
+
+            ctx.fillStyle = '#777';
+            ctx.beginPath();
+            ctx.moveTo(275 - weldWidth / 2, 350);
+            ctx.lineTo(275 + weldWidth / 2, 350);
+            ctx.lineTo(275 + weldWidth / 4, 350 - weldHeight);
+            ctx.lineTo(275 - weldWidth / 4, 350 - weldHeight);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = '#555';
+            ctx.beginPath();
+            ctx.moveTo(275 - weldWidth / 2, 350);
+            ctx.lineTo(275 + weldWidth / 2, 350);
+            ctx.lineTo(275, 350 + weldDepth);
+            ctx.closePath();
+            ctx.fill();
+
+            // Adiciona legendas (deslocadas 100px para baixo)
+            ctx.fillStyle = '#000';
+            ctx.font = '14px Arial';
+            ctx.fillText('Vista Superior', 50, 130);
+            ctx.fillText('Vista em Corte', 50, 330);
+            
+            // Adiciona informações sobre os parâmetros
+            ctx.fillText(`Largura: ${weldWidth.toFixed(1)} mm`, 400, 30);
+            ctx.fillText(`Profundidade: ${weldDepth.toFixed(1)} mm`, 400, 50);
+            ctx.fillText(`Altura: ${weldHeight.toFixed(1)} mm`, 400, 70);
+            ctx.fillText(`Aporte Térmico: ${heatInput.toFixed(2)} kJ/mm`, 400, 90);
+        }
+
+        simulateButton.addEventListener('click', simulateWeld);
+        voltageInput.addEventListener('input', simulateWeld);
+        currentInput.addEventListener('input', simulateWeld);
+        speedInput.addEventListener('input', simulateWeld);
+        
+        calculateHeatInput();
+        simulateWeld();
+    </script>
+</body>
+</html>

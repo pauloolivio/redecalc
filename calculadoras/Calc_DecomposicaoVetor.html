@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Decomposição de Vetores de Força</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+            text-align: center;
+        }
+        #inputContainer {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            margin: 0 10px;
+        }
+        input, button {
+            margin: 5px 0;
+            padding: 5px;
+        }
+        canvas {
+            border: 2px solid #000;
+            max-width: 100%;
+            height: auto;
+        }
+        #resultContainer {
+            margin-top: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Decomposição de Vetores de Força</h1>
+    <div id="inputContainer">
+        <div class="input-group">
+            <label for="intensity">Intensidade do Vetor:</label>
+            <input type="number" id="intensity" value="80">
+        </div>
+        <div class="input-group">
+            <label for="angle">Ângulo (em graus):</label>
+            <input type="number" id="angle" value="30">
+        </div>
+        <button onclick="calculateAndDraw()">Calcular e Desenhar</button>
+    </div>
+    <canvas id="vectorCanvas" width="500" height="500"></canvas>
+    <div id="resultContainer"></div>
+
+    <script>
+        const canvas = document.getElementById('vectorCanvas');
+        const ctx = canvas.getContext('2d');
+        let centerX, centerY, scale;
+
+        function resizeCanvas() {
+            const containerWidth = Math.min(window.innerWidth - 40, 500);
+            canvas.width = containerWidth;
+            canvas.height = containerWidth;
+            centerX = canvas.width / 2;
+            centerY = canvas.height / 2;
+            scale = containerWidth / 200;
+            calculateAndDraw();
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function drawGrid() {
+            ctx.strokeStyle = '#ddd';
+            ctx.lineWidth = 0.5;
+            for (let i = 0; i <= canvas.width; i += 20 * scale) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, canvas.height);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(canvas.width, i);
+                ctx.stroke();
+            }
+        }
+
+        function drawAxis() {
+            ctx.beginPath();
+            ctx.moveTo(0, centerY);
+            ctx.lineTo(canvas.width, centerY);
+            ctx.moveTo(centerX, 0);
+            ctx.lineTo(centerX, canvas.height);
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // Draw angle labels
+            ctx.fillStyle = '#000';
+            ctx.font = `${10 * scale}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('0°', canvas.width - 10 * scale, centerY - 10 * scale);
+            ctx.fillText('360°', canvas.width - 10 * scale, centerY + 10 * scale);
+            ctx.fillText('90°', centerX + 15 * scale, 10 * scale);
+            ctx.fillText('180°', 20 * scale, centerY - 10 * scale);
+            ctx.fillText('270°', centerX + 15 * scale, canvas.height - 10 * scale);
+            }
+
+            function drawVector(x, y, color) {
+                const endX = centerX + x * scale;
+                const endY = centerY - y * scale;
+                
+                // Desenhar a linha do vetor
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.lineTo(endX, endY);
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 3;
+                ctx.stroke();
+
+                // Desenhar o círculo no final do vetor
+                ctx.beginPath();
+                ctx.arc(endX, endY, 5 * scale, 0, 2 * Math.PI);
+                ctx.fillStyle = color;
+                ctx.fill();
+            }
+
+        function calculateAndDraw() {
+            const intensity = parseFloat(document.getElementById('intensity').value);
+            const angle = parseFloat(document.getElementById('angle').value);
+            const radians = angle * Math.PI / 180;
+
+            const xComponent = intensity * Math.cos(radians);
+            const yComponent = intensity * Math.sin(radians);
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawGrid();
+            drawAxis();
+
+            // Draw original vector
+            drawVector(xComponent, yComponent, 'blue');
+
+            // Draw x component
+            drawVector(xComponent, 0, 'red');
+
+            // Draw y component
+            drawVector(0, yComponent, 'green');
+
+            // Display component values and resultant force
+            const resultContainer = document.getElementById('resultContainer');
+            resultContainer.innerHTML = `
+                <p>Fx = ${xComponent.toFixed(2)}</p>
+                <p>Fy = ${yComponent.toFixed(2)}</p>
+                <p>Força Resultante = ${intensity.toFixed(2)}</p>
+            `;
+        }
+
+        // Initial draw
+        calculateAndDraw();
+    </script>
+</body>
+</html>
