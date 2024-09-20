@@ -22,7 +22,6 @@
         #game-container {
             display: flex;
             position: relative;
-            width: 100vw;
             height: 100vw;
             max-width: 800px;
             max-height: 840px;
@@ -78,8 +77,8 @@
             margin-top: 20px;
         }
         .control-button {
-            width: 80px;
-            height: 80px;
+            width: 50px;
+            height: 50px;
             margin: 5px;
             font-size: 24px;
             display: flex;
@@ -146,6 +145,7 @@
         let movementInterval;
         let currentDirection = null;
         let sessionCode = generateSessionCode();
+        let gameFinished = false;
 
         const cellSize = 30;
         const playerSize = 20;
@@ -247,6 +247,7 @@
             playerY = cellSize * 1.5;
             sessionCode = generateSessionCode();
             sessionCodeElement.textContent = sessionCode;
+            printButton.disabled = true;
             drawMaze();
             drawPlayer();
         }
@@ -511,8 +512,36 @@
             }
         }
 
-        function printGameResults() {
+        function endGame(win) {
+            clearInterval(timerInterval);
+            stopMovement();
             const timeElapsed = Math.floor((Date.now() - gameStartTime) / 1000);
+            if (win) {
+                alert(`Parabéns! Você completou o labirinto em ${timeElapsed} segundos com ${score} pontos!`);
+            } else {
+                alert(`Fim de jogo! Você perdeu todas as vidas. Pontuação final: ${score}`);
+            }
+            gameFinished = true;
+            printButton.disabled = false;
+        }
+
+        function mazeToString() {
+            return maze.map(row => 
+                row.map(cell => {
+                    if (cell === 1) return '█';
+                    if (cell === 2) return '$';
+                    return ' ';
+                }).join('')
+            ).join('\n');
+        }
+        function printGameResults() {
+            if (!gameFinished) {
+                alert("Você só pode imprimir os resultados após terminar o jogo!");
+                return;
+            }
+
+            const timeElapsed = Math.floor((Date.now() - gameStartTime) / 1000);
+            const mazeString = mazeToString();
             const printWindow = window.open('', '_blank');
             printWindow.document.write(`
                 <html>
@@ -522,6 +551,7 @@
                         body { font-family: Arial, sans-serif; }
                         h1 { color: #333; }
                         .result { margin-bottom: 10px; }
+                        pre { font-family: monospace; white-space: pre; }
                     </style>
                 </head>
                 <body>
@@ -530,6 +560,8 @@
                     <div class="result">Tempo: ${timeElapsed} segundos</div>
                     <div class="result">Pontuação: ${score}</div>
                     <div class="result">Vidas restantes: ${lives}</div>
+                    <div class="result">Labirinto:</div>
+                    <pre>${mazeString}</pre>
                 </body>
                 </html>
             `);
@@ -537,6 +569,20 @@
             printWindow.print();
         }
 
+        function restartGame() {
+            resetPlayerPosition();
+            clearInterval(timerInterval);
+            lives = 3;
+            score = 0;
+            answeredQuestions.clear();
+            updateLives();
+            updateScore();
+            startTimer();
+            drawMaze();
+            drawPlayer();
+            gameFinished = false;
+            printButton.disabled = true;
+        }
         initGame();
         restartButton.addEventListener('click', restartGame);
         printButton.addEventListener('click', printGameResults);
