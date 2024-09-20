@@ -28,11 +28,11 @@
         /* Gallery */
         
         .jumbotron {
-            height: 550px;
+            height: 80vh; /* Ajusta a altura para ser responsiva */
             padding-top: 75px;
-            background-image: url('assets/background.jpg'); /* Adicione a imagem de fundo aqui */
+            background-image: url('assets/background.jpg'); /* Imagem de fundo */
             background-size: cover; /* Faz a imagem cobrir todo o jumbotron */
-            background-position: center; /* Centraliza a imagem */
+            background-position: center center; /* Centraliza a imagem */
             background-repeat: no-repeat; /* Evita repetição da imagem */
             color: white;
         }
@@ -183,6 +183,12 @@
             margin: 0; /* Remove margens do parágrafo */
             font-family: 'Arial', sans-serif; /* Fonte */
         }
+
+        @media (max-width: 768px) {
+        .jumbotron {
+        height: 100vh; /* Ajusta a altura em telas menores */
+        }
+        }      
 
     </style>
 </head>
