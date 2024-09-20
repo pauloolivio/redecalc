@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caça-Palavras: Metalurgia da Soldagem</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        #game-container {
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+            position: relative;
+        }
+        #word-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 30px);
+            gap: 5px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+        .letter {
+            width: 30px;
+            height: 30px;
+            border: 1px solid #ccc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+        .selected {
+            background-color: yellow;
+        }
+        .found {
+            background-color: lightgreen;
+        }
+        #question-list {
+            text-align: left;
+        }
+        #game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        #student-info {
+            margin-bottom: 20px;
+        }
+        #student-info input {
+            margin-right: 10px;
+        }
+        .button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+        }
+        #watermark {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: rgba(0, 0, 0, 0.1);
+            transform: rotate(-45deg);
+            pointer-events: none;
+        }
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #game-container, #game-container * {
+                visibility: visible;
+            }
+            #game-container {
+                position: absolute;
+                left: 0;
+                top: 0;
+            }
+            #watermark {
+                display: flex;
+            }
+            .letter.found {
+                background-color: lightgreen !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .letter:not(.found) {
+                background-color: white !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="watermark"></div>
+        <h1>Caça-Palavras: Metalurgia da Soldagem</h1>
+        <div id="student-info">
+            <input type="text" id="student-name" placeholder="Nome do Aluno">
+            <input type="text" id="student-ra" placeholder="RA">
+        </div>
+        <div id="game-info">
+            <div>Pontuação: <span id="score">0</span></div>
+            <div>Tempo: <span id="timer">01:00</span></div>
+        </div>
+        <div id="word-grid"></div>
+        <div id="question-list">
+            <h3>Questões:</h3>
+            <ol id="questions"></ol>
+        </div>
+        <div>Código da sessão: <span id="session-code"></span></div>
+        <button id="restart-button" class="button">Reiniciar</button>
+        <button id="print-button" class="button" disabled>Imprimir</button>
+    </div>
+
+    <script>
+        const grid = [
+            ['S', 'O', 'L', 'D', 'A', 'G', 'E', 'M', 'F', 'A'],
+            ['E', 'L', 'E', 'T', 'R', 'O', 'D', 'O', 'L', 'R'],
+            ['M', 'E', 'T', 'A', 'L', 'F', 'A', 'X', 'U', 'C'],
+            ['F', 'L', 'U', 'X', 'O', 'A', 'R', 'C', 'J', 'O'],
+            ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'O', 'K'],
+            ['K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T'],
+            ['U', 'V', 'W', 'F', 'Y', 'Z', 'A', 'B', 'C', 'D'],
+            ['E', 'F', 'C', 'H', 'I', 'J', 'K', 'L', 'M', 'N'],
+            ['O', 'A', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X'],
+            ['W', 'Z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+        ];
+
+        const wordGrid = document.getElementById('word-grid');
+        const scoreElement = document.getElementById('score');
+        const timerElement = document.getElementById('timer');
+        const questionsElement = document.getElementById('questions');
+        const restartButton = document.getElementById('restart-button');
+        const printButton = document.getElementById('print-button');
+        const sessionCodeElement = document.getElementById('session-code');
+        const watermarkElement = document.getElementById('watermark');
+
+        let isSelecting = false;
+        let selectedLetters = [];
+        let score = 0;
+        let timeLeft = 60;
+        let timerInterval;
+        let wordsToFind = ['SOLDAGEM', 'ELETRODO', 'FLUXO', 'ARCO', 'METAL', 'FCAW'];
+        let sessionCode = '';
+
+        const questions = [
+            { question: "Processo de união de materiais metálicos por fusão localizada:", answer: "SOLDAGEM" },
+            { question: "Componente metálico que conduz a corrente elétrica e serve como material de adição:", answer: "ELETRODO" },
+            { question: "Material utilizado para proteger o arco elétrico e a poça de fusão:", answer: "FLUXO" },
+            { question: "Descarga elétrica mantida através de um gás ionizado:", answer: "ARCO" },
+            { question: "Material base utilizado na soldagem:", answer: "METAL" },
+            { question: "Sigla do processo de soldagem com arame tubular:", answer: "FCAW" }
+        ];
+
+        function createGrid() {
+            wordGrid.innerHTML = '';
+            for (let i = 0; i < grid.length; i++) {
+                for (let j = 0; j < grid[i].length; j++) {
+                    const letterDiv = document.createElement('div');
+                    letterDiv.className = 'letter';
+                    letterDiv.textContent = grid[i][j];
+                    letterDiv.dataset.row = i;
+                    letterDiv.dataset.col = j;
+                    wordGrid.appendChild(letterDiv);
+                }
+            }
+        }
+
+        function displayQuestions() {
+            questionsElement.innerHTML = '';
+            questions.forEach((q, index) => {
+                const li = document.createElement('li');
+                li.textContent = q.question;
+                li.dataset.index = index;
+                questionsElement.appendChild(li);
+            });
+        }
+
+        function handleMouseDown(e) {
+            if (e.target.classList.contains('letter')) {
+                isSelecting = true;
+                toggleLetterSelection(e.target);
+            }
+        }
+
+        function handleMouseOver(e) {
+            if (isSelecting && e.target.classList.contains('letter')) {
+                toggleLetterSelection(e.target);
+            }
+        }
+
+        function handleMouseUp() {
+            isSelecting = false;
+            checkSelection();
+            selectedLetters = [];
+            document.querySelectorAll('.letter:not(.found)').forEach(letter => letter.classList.remove('selected'));
+        }
+
+        function toggleLetterSelection(letter) {
+            if (!letter.classList.contains('found')) {
+                letter.classList.toggle('selected');
+                const index = selectedLetters.findIndex(l => l.dataset.row === letter.dataset.row && l.dataset.col === letter.dataset.col);
+                if (index === -1) {
+                    selectedLetters.push(letter);
+                } else {
+                    selectedLetters.splice(index, 1);
+                }
+            }
+        }
+
+        function checkSelection() {
+            const word = selectedLetters.map(letter => letter.textContent).join('');
+            const reversedWord = word.split('').reverse().join('');
+            
+            if (wordsToFind.includes(word) || wordsToFind.includes(reversedWord)) {
+                markWordAsFound(word);
+                updateScore(word.length);
+                checkGameCompletion();
+            }
+        }
+
+        function markWordAsFound(word) {
+            selectedLetters.forEach(letter => letter.classList.add('found'));
+            const questionElement = Array.from(questionsElement.children).find(li => questions[li.dataset.index].answer === word);
+            if (questionElement) {
+                questionElement.style.textDecoration = 'line-through';
+            }
+            wordsToFind = wordsToFind.filter(w => w !== word);
+        }
+
+        function updateScore(points) {
+            score += points;
+            scoreElement.textContent = score;
+        }
+
+        function checkGameCompletion() {
+            if (wordsToFind.length === 0) {
+                clearInterval(timerInterval);
+                alert(`Parabéns, você completou o jogo! Pontuação final: ${score}`);
+                printButton.disabled = false;
+            }
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    alert('Tempo esgotado! O jogo será reiniciado.');
+                    resetGame();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function resetGame() {
+            clearInterval(timerInterval);
+            timeLeft = 60;
+            score = 0;
+            wordsToFind = ['SOLDAGEM', 'ELETRODO', 'FLUXO', 'ARCO', 'METAL', 'FCAW'];
+            scoreElement.textContent = score;
+            updateTimerDisplay();
+            createGrid();
+            displayQuestions();
+            generateSessionCode();
+            startTimer();
+            printButton.disabled = true;
+        }
+
+        function generateSessionCode() {
+            sessionCode = Math.random().toString(36).substr(2, 8).toUpperCase();
+            sessionCodeElement.textContent = sessionCode;
+        }
+
+        function printGame() {
+            const studentName = document.getElementById('student-name').value;
+            const studentRA = document.getElementById('student-ra').value;
+            const currentDate = new Date().toLocaleString();
+            
+            watermarkElement.textContent = `${studentName} - ${studentRA} - ${currentDate} - ${sessionCode}`;
+            window.print();
+        }
+
+        createGrid();
+        displayQuestions();
+        generateSessionCode();
+        startTimer();
+        wordGrid.addEventListener('mousedown', handleMouseDown);
+        wordGrid.addEventListener('mouseover', handleMouseOver);
+        document.addEventListener('mouseup', handleMouseUp);
+        restartButton.addEventListener('click', resetGame);
+        printButton.addEventListener('click', printGame);
+    </script>
+</body>
+</html>
