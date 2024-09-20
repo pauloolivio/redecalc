@@ -110,8 +110,8 @@
     </div>
 
     <div>Código da sessão: <span id="session-code"></span></div>
-    <button id="restart" class="button">Reiniciar</button>
-    <button id="print-button" class="button" disabled>Imprimir</button>
+    <button id="restart-button" class="button">Reiniciar</button>
+    <button id="print-button" class="button">Imprimir</button>
 
     <div id="question-modal">
         <div class="modal-content">
@@ -132,7 +132,8 @@
         const timerElement = document.getElementById('timer');
         const livesElement = document.getElementById('lives');
         const scoreElement = document.getElementById('score');
-        const restartButton = document.getElementById('restart');
+        const restartButton = document.getElementById('restart-button');
+        const sessionCodeElement = document.getElementById('session-code');
 
         let playerX, playerY;
         let currentDoor = null;
@@ -144,6 +145,7 @@
         let canMove = true;
         let movementInterval;
         let currentDirection = null;
+        let sessionCode = generateSessionCode();
 
         const cellSize = 30;
         const playerSize = 20;
@@ -234,12 +236,17 @@
             {x: 18, y: 10, question: 4}
         ];
         
-        // Posição inicial do jogador
+        function generateSessionCode() {
+            return Math.random().toString(36).substr(2, 8).toUpperCase();
+        }
+
         function initGame() {
             canvas.width = cellSize * maze[0].length;
             canvas.height = cellSize * maze.length;
             playerX = cellSize * 1.5;
             playerY = cellSize * 1.5;
+            sessionCode = generateSessionCode();
+            sessionCodeElement.textContent = sessionCode;
             drawMaze();
             drawPlayer();
         }
@@ -447,7 +454,7 @@
             } else {
                 alert(`Fim de jogo! Você perdeu todas as vidas. Pontuação final: ${score}`);
             }
-            restartGame();
+            printButton.disabled = false;
         }
 
         function restartGame() {
@@ -461,6 +468,7 @@
             startTimer();
             drawMaze();
             drawPlayer();
+            printButton.disabled = true;
         }
 
         function handleKeyDown(e) {
@@ -503,8 +511,35 @@
             }
         }
 
+        function printGameResults() {
+            const timeElapsed = Math.floor((Date.now() - gameStartTime) / 1000);
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>Resultados do Labirinto da Soldagem</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; }
+                        h1 { color: #333; }
+                        .result { margin-bottom: 10px; }
+                    </style>
+                </head>
+                <body>
+                    <h1>Resultados do Labirinto da Soldagem</h1>
+                    <div class="result">Código da sessão: ${sessionCode}</div>
+                    <div class="result">Tempo: ${timeElapsed} segundos</div>
+                    <div class="result">Pontuação: ${score}</div>
+                    <div class="result">Vidas restantes: ${lives}</div>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
         initGame();
         restartButton.addEventListener('click', restartGame);
+        printButton.addEventListener('click', printGameResults);
         startTimer();
         updateLives();
         updateScore();
